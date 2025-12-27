@@ -126,3 +126,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+def env_bool(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
+CSRF_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)

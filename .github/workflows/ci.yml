@@ -1,0 +1,43 @@
+name: docker-compose
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  compose-up:
+    runs-on: [self-hosted]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create .env from secrets
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+          DEBUG: ${{ secrets.DEBUG }}
+          DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
+          DJANGO_CSRF_TRUSTED_ORIGINS: ${{ secrets.DJANGO_CSRF_TRUSTED_ORIGINS }}
+          DJANGO_SECURE_COOKIES: ${{ secrets.DJANGO_SECURE_COOKIES }}
+        run: |
+          rm -f .env
+          while IFS='=' read -r key _; do
+            if [ -z "$key" ]; then
+              continue
+            fi
+            case "$key" in \#*) continue ;; esac
+            value="${!key}"
+            if [ -z "$value" ]; then
+              echo "Missing secret for $key" >&2
+              exit 1
+            fi
+            echo "$key=$value" >> .env
+          done < .env.example
+
+      - name: Docker compose up
+        run: docker compose up -d --build
