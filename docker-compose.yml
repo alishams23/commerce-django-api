@@ -33,6 +33,7 @@ services:
              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers=3"
     volumes:
       - .:/app
+      - static_data:/app/static
     env_file:
       - .env
     depends_on:
@@ -46,6 +47,7 @@ services:
 
 volumes:
   postgres_commerce_data:
+  static_data:
 
 networks:
   backend:
