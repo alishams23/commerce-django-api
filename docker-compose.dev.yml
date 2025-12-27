@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_faratabesh
+    env_file:
+      - .env.development
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_faratabesh
+    restart: always
+    ports:
+      - "5432:5432" # expose Postgres for developer access
+
+  redis:
+    image: redis:alpine
+    container_name: redis_faratabesh
+    networks:
+      - backend_faratabesh
+    restart: always
+    ports:
+      - "6379:6379" # expose Redis for developer access
+
+volumes:
+  postgres_data:
+
+networks:
+  backend_faratabesh:
