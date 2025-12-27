@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:13
+    image: docker.arvancloud.ir/postgres:latest
     container_name: postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -15,7 +15,7 @@ services:
     restart: always
 
   redis:
-    image: redis:alpine
+    image: docker.arvancloud.ir/redis:5
     container_name: redis
     networks:
       - backend
