@@ -44,7 +44,7 @@ services:
     restart: always
 
 volumes:
-  postgres_data:
+  postgres_commerce_data:
 
 networks:
   backend:
