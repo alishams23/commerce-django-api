@@ -2,20 +2,20 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:13
+    image: docker.arvancloud.ir/postgres:latest
     container_name: postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_commerce_data:/var/lib/postgresql
     networks:
       - backend
     restart: always
 
   redis:
-    image: redis:alpine
+    image: docker.arvancloud.ir/redis:5
     container_name: redis
     networks:
       - backend
@@ -26,25 +26,29 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: django
+    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers=3"
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
+      - static_data:/app/static
+      - media_data:/app/media
     env_file:
       - .env
     depends_on:
       - db
       - redis
     ports:
-      - "8000:8000"
+      - "8002:8000"
     networks:
       - backend
     restart: always
 
 volumes:
-  postgres_data:
+  postgres_commerce_data:
+  static_data:
+  media_data:
 
 networks:
   backend:

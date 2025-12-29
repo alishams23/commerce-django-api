@@ -10,10 +10,10 @@ from .base import *
 
 DEBUG = os.environ.get("DEBUG")
 
-allowed_hosts = os.environ.get("ALLOWED_HOSTS", "")
+allowed_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
 ALLOWED_HOSTS = tuple(url.strip() for url in allowed_hosts.split(","))
 
-csrf_trusted_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+csrf_trusted_origins = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "")
 CORS_ALLOWED_ORIGINS = tuple(url.strip() for url in csrf_trusted_origins.split(","))
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
