@@ -43,7 +43,7 @@ class SignUpVerifyCodeAdmin(admin.ModelAdmin):
     list_display = ("phone_number", "verify_phone_number", "count_sms", "created_at", "updated_at")
     search_fields = ("phone_number",)
     list_filter = ("verify_phone_number", "created_at")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 
 # ============================
@@ -54,12 +54,13 @@ class ContactUsAdmin(admin.ModelAdmin):
     list_display = ("first_name", "last_name", "phone_number", "email", "is_called", "created_at")
     search_fields = ("first_name", "last_name", "phone_number", "email")
     list_filter = ("is_called", "created_at")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     fieldsets = (
         (_("اطلاعات کاربر"), {"fields": ("user", "first_name", "last_name", "phone_number", "email")}),
         (_("توضیحات"), {"fields": ("description",)}),
         (_("وضعیت تماس"), {"fields": ("is_called",)}),
         (_("تاریخ‌ها"), {"fields": ("created_at", "updated_at")}),
+        (("Deleted"),{"fields":("is_deleted","deleted_at")})
     )
 
 
@@ -69,7 +70,7 @@ class ContactUsAdmin(admin.ModelAdmin):
 class NotificationReadInline(admin.TabularInline):
     model = NotificationRead
     extra = 1
-    readonly_fields = ("read_at", "created_at", "updated_at")
+    readonly_fields = ('is_read',"read_at",'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     fields = ("user", "is_read", "read_at", "created_at", "updated_at")
     can_delete = True
 
@@ -87,7 +88,7 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ("title", "is_published", "published_at", "created_at")
     search_fields = ("title", "text")
     list_filter = ("is_published", "published_at", "created_at")
-    readonly_fields = ("created_at", "updated_at", "published_at")
+    readonly_fields = ('published_at','created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     fieldsets = (
         (_("محتوا"), {"fields": ("title", "text")}),
         (_("وضعیت انتشار"), {"fields": ("is_published", "published_at")}),
@@ -97,7 +98,7 @@ class NotificationAdmin(admin.ModelAdmin):
 
 
 # ============================
-# فیلتر سفارشی برای is_read
+# Custom Filter is_read
 # ============================
 from django.contrib.admin import SimpleListFilter
 
@@ -124,10 +125,10 @@ class IsReadFilter(SimpleListFilter):
 # ============================
 @admin.register(NotificationRead)
 class NotificationReadAdmin(admin.ModelAdmin):
-    list_display = ("user", "notification", "is_read", "read_at", "created_at")
+    list_display = ("user", "notification","is_read","read_at", "created_at")
     search_fields = ("user__username", "notification__title")
-    list_filter = (IsReadFilter, "read_at", "created_at")  # استفاده از فیلتر سفارشی
-    readonly_fields = ("created_at", "updated_at", "read_at")
+    list_filter = (IsReadFilter, "read_at", "created_at") 
+    readonly_fields = ('is_read','read_at','created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     fieldsets = (
         (_("کاربر و اعلان"), {"fields": ("user", "notification")}),
         (_("وضعیت"), {"fields": ("is_read", "read_at")}),

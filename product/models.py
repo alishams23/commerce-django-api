@@ -2,16 +2,16 @@ from datetime import timedelta
 from django.db import models
 from django.forms import ValidationError
 from django.utils import timezone
+from core.models.auditable import AuditableModel
+from core.models.soft_delete import SoftDeleteModel
 from user.models import User
 from .utils import generate_discount_code
 # Create your models here.
 
 
-class Category(models.Model):#Mptt
+class Category(AuditableModel, SoftDeleteModel):#Mptt
     name = models.CharField(max_length = 50,verbose_name = "نام دسته بندی والد")
     order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش دسته بندی")
-    created_at = models.DateTimeField(auto_now_add = True,verbose_name = "تاریخ ایجاد")
-    updated_at = models.DateTimeField(auto_now = True,verbose_name = "تاریخ به‌روزرسانی")
     
     def __str__(self):
         return f"دسته بندی والد{self.id} - {self.name}"
@@ -21,12 +21,10 @@ class Category(models.Model):#Mptt
         verbose_name_plural = "دسته بندی های والد"
     
 
-class CategoryChildren(models.Model):
+class CategoryChildren(AuditableModel, SoftDeleteModel):
     category = models.ForeignKey(Category,on_delete = models.PROTECT,related_name = "children",verbose_name = "دسته بندی والد")
     name = models.CharField(max_length = 50,verbose_name = "نام دسته بندی فرزند")
     order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش دسته بندی")
-    created_at = models.DateTimeField(auto_now_add = True,verbose_name = "تاریخ ایجاد")
-    updated_at = models.DateTimeField(auto_now = True,verbose_name = "تاریخ به‌روزرسانی")
 
     def __str__(self):
         return f"دسته بندی فرزند{self.id} - {self.name}"
@@ -36,10 +34,8 @@ class CategoryChildren(models.Model):
         verbose_name_plural = "دسته بندی های فرزند"
 
 
-class Brand(models.Model):
+class Brand(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length = 50,verbose_name = "نام برند")
-    created_at = models.DateTimeField(auto_now_add = True,verbose_name = "تاریخ ایجاد")
-    updated_at = models.DateTimeField(auto_now = True,verbose_name = "تاریخ به‌روزرسانی")
 
     def __str__(self):
         return f"برند {self.id} - {self.name}"
@@ -48,7 +44,7 @@ class Brand(models.Model):
         verbose_name = "برند"
         verbose_name_plural = "برندها "
 
-class Product(models.Model):
+class Product(AuditableModel, SoftDeleteModel):
     category = models.ForeignKey(Category,on_delete = models.PROTECT,related_name = "products",verbose_name = "دسته بندی محصول")
     name = models.CharField(max_length = 100,verbose_name = "نام محصول")
     brand = models.ForeignKey(Brand,on_delete = models.PROTECT,blank = True,null = True,related_name = "products",verbose_name = "برند محصول")
@@ -59,8 +55,6 @@ class Product(models.Model):
     percentage = models.PositiveIntegerField(default = 0, verbose_name = "درصد تخفیف ویژه این محصول")
     is_published = models.BooleanField(default = True,verbose_name = "وضعیت انتشار محصول")
     is_favorite = models.BooleanField(default = False,verbose_name = "وضعیت محبوبیت")
-    created_at = models.DateTimeField(auto_now_add = True,verbose_name = "تاریخ ایجاد")
-    updated_at = models.DateTimeField(auto_now = True,verbose_name = "تاریخ به‌روزرسانی")
     
     def __str__(self):
         return f"محصول {self.id} - {self.name}"   
@@ -69,7 +63,7 @@ class Product(models.Model):
         verbose_name = "محصول"
         verbose_name_plural = "محصولات "
     
-class ProductColor(models.Model):
+class ProductColor(AuditableModel, SoftDeleteModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="colors")
     name = models.CharField(max_length=50, verbose_name="اسم رنگ")
     code = models.CharField(max_length=20, null=True, blank=True, verbose_name='کد رنگ (HEX)')
@@ -94,14 +88,12 @@ class ProductColor(models.Model):
         verbose_name = "رنگ محصول"
         verbose_name_plural = "رنگ بندی محصولات"
     
-class ProductImage(models.Model):
+class ProductImage(AuditableModel, SoftDeleteModel):
 
     product_color = models.ForeignKey(ProductColor,on_delete = models.CASCADE,related_name = 'images',verbose_name = "عکس مختص رنگ محصول")
     image = models.ImageField(upload_to = f"products/image/product-color/")#def upload
     order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش عکس")
     is_cover = models.BooleanField(default = False,verbose_name = "عکس کاور",help_text = "انتخاب این عکس به عنوان عکس پیش نمایش محصول داخل لیست محصولات")
-    created_at = models.DateTimeField(auto_now_add = True,verbose_name = "تاریخ ایجاد")
-    updated_at = models.DateTimeField(auto_now = True,verbose_name = "تاریخ به‌روزرسانی")
     
     def __str__(self):
         return f"عکس محصول {self.product_color}"
@@ -111,13 +103,11 @@ class ProductImage(models.Model):
         verbose_name_plural = "عکس های محصولات"
         
 
-class ProductComment(models.Model):
+class ProductComment(AuditableModel, SoftDeleteModel):
     user = models.ForeignKey(User,on_delete = models.CASCADE,related_name = "product_comments",verbose_name = "کاربر")
     product = models.ForeignKey(Product,on_delete = models.CASCADE,related_name = "comments",verbose_name = "محصول")
     text = models.TextField(verbose_name = "متن نظر")
     is_approved = models.BooleanField(default=True,verbose_name = "وضعیت تایید نظر")
-    created_at = models.DateTimeField(auto_now_add = True,verbose_name = "تاریخ ایجاد")
-    updated_at = models.DateTimeField(auto_now = True,verbose_name = "تاریخ به‌روزرسانی")
 
     def __str__(self):
         return f"نظر محصول {self.user.username} - {self.product.name}"
@@ -127,7 +117,7 @@ class ProductComment(models.Model):
         verbose_name_plural = "نظرات محصولات"
         
         
-class DiscountCode(models.Model):
+class DiscountCode(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length = 50 ,blank = True,null = True,verbose_name = "نام کدتخفیف")
     code = models.CharField(max_length = 20,unique = True,db_index = True)
     amount = models.PositiveIntegerField(verbose_name = "مقدار تخفیف")
@@ -137,8 +127,6 @@ class DiscountCode(models.Model):
     expired_at = models.DateTimeField(default = timezone.now() + timedelta(days=2),verbose_name = "زمان انقضا",help_text = "زمان انقضا به صورت پیش فرض دو روز بعد از زمان سیستم است!")
     is_all_products = models.BooleanField(default = False,verbose_name = "تمام محصولات",help_text = "با فعال کردن این گزینه، کدتخفیف شامل تمامی محصولات سایت میشود!")
     products = models.ManyToManyField(Product,blank = True,related_name = "discount_codes",verbose_name = "محصولات شامل این کد تخفیف")
-    created_at = models.DateTimeField(auto_now_add = True,verbose_name = "تاریخ ایجاد")
-    updated_at = models.DateTimeField(auto_now = True,verbose_name = "تاریخ به‌روزرسانی")
     
     def save(self,*args,**kwargs):
         if not self.pk:
@@ -179,4 +167,6 @@ class DiscountCode(models.Model):
         self.current_usage += 1
         self.save()
         
-    
+    class Meta:
+        verbose_name = "کدتخفیف"
+        verbose_name_plural = "کدهای تخفیف"
