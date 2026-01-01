@@ -11,7 +11,7 @@ RUN apt-get update \
         libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY production.txt /app/requirements/production.txt
+COPY requirements/production.txt /app/requirements/production.txt
 RUN pip install --no-cache-dir -r /app/requirements/production.txt
 
 COPY . /app
