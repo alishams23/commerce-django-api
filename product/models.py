@@ -9,12 +9,12 @@ from .utils import generate_discount_code
 # Create your models here.
 
 
-class Category(AuditableModel, SoftDeleteModel):#Mptt
+class Category(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length = 50,verbose_name = "نام دسته بندی والد")
     order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش دسته بندی")
-    
+    is_active = models.BooleanField(default = True,verbose_name = "فعال/غیرفعال")
     def __str__(self):
-        return f"دسته بندی والد{self.id} - {self.name}"
+        return f"دسته بندی والد - {self.name}"
     
     class Meta:
         verbose_name = "دسته بندی والد"
@@ -22,17 +22,17 @@ class Category(AuditableModel, SoftDeleteModel):#Mptt
     
 
 class CategoryChildren(AuditableModel, SoftDeleteModel):
-    category = models.ForeignKey(Category,on_delete = models.PROTECT,related_name = "children",verbose_name = "دسته بندی والد")
+    category = models.ForeignKey(Category,on_delete = models.PROTECT,related_name = "childrens",verbose_name = "دسته بندی والد")
     name = models.CharField(max_length = 50,verbose_name = "نام دسته بندی فرزند")
     order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش دسته بندی")
-
+    icon = models.ImageField(upload_to = "products/image/category-children/icon/",blank = True,null = True,verbose_name = "کاور دسته بندی فرزند")
+    is_active = models.BooleanField(default = True,verbose_name = "فعال/غیرفعال")
     def __str__(self):
-        return f"دسته بندی فرزند{self.id} - {self.name}"
+        return f"دسته بندی فرزند - {self.name}"
     
     class Meta:
         verbose_name = "دسته بندی فرزند"
         verbose_name_plural = "دسته بندی های فرزند"
-
 
 class Brand(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length = 50,verbose_name = "نام برند")
@@ -45,7 +45,7 @@ class Brand(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "برندها "
 
 class Product(AuditableModel, SoftDeleteModel):
-    category = models.ForeignKey(Category,on_delete = models.PROTECT,related_name = "products",verbose_name = "دسته بندی محصول")
+    category = models.ForeignKey(CategoryChildren,on_delete = models.PROTECT,related_name = "products",verbose_name = "دسته بندی محصول")
     name = models.CharField(max_length = 100,verbose_name = "نام محصول")
     brand = models.ForeignKey(Brand,on_delete = models.PROTECT,blank = True,null = True,related_name = "products",verbose_name = "برند محصول")
     specifications = models.TextField(blank = True,null = True , verbose_name = "مشخصات محصول")
@@ -59,6 +59,8 @@ class Product(AuditableModel, SoftDeleteModel):
     def __str__(self):
         return f"محصول {self.id} - {self.name}"   
     
+    # TODO: Validation Save Similar ProductColor In Django Panel!
+    
     class Meta:
         verbose_name = "محصول"
         verbose_name_plural = "محصولات "
@@ -68,12 +70,13 @@ class ProductColor(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length=50, verbose_name="اسم رنگ")
     code = models.CharField(max_length=20, null=True, blank=True, verbose_name='کد رنگ (HEX)')
     price = models.PositiveBigIntegerField(blank=True, null=True, verbose_name="قیمت این رنگ")
-    stock = models.PositiveIntegerField(verbose_name="موجودی این رنگ")
+    stock = models.PositiveIntegerField(default = 0,verbose_name="موجودی این رنگ")
 
     def __str__(self):
         return f"رنگ محصول {self.product} - {self.name}"
 
     def save(self, *args, **kwargs):
+        # TODO: Validation In Django Panel!
         if self.price:
             if not self.product.fixed_price or self.price < self.product.fixed_price:
                 self.product.fixed_price = self.price

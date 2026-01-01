@@ -6,7 +6,7 @@ from .models import Category, CategoryChildren, Brand, Product, ProductColor, Pr
 class CategoryChildrenInline(admin.TabularInline):
     model = CategoryChildren
     extra = 1
-    fields = ('name', 'order')
+    fields = ('name', 'order','is_active','icon')
     ordering = ('order',)
     verbose_name = "دسته بندی فرزند"
     verbose_name_plural = "دسته بندی‌های فرزند"
@@ -22,8 +22,8 @@ class ProductColorInline(admin.TabularInline):
 # ------------------- Category -------------------
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'order', 'created_at', 'updated_at','is_deleted')
-    list_editable = ('order','is_deleted')
+    list_display = ('id', 'name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
+    list_editable = ('order','is_active','is_deleted')
     search_fields = ('name',)
     ordering = ('order',)
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
@@ -32,8 +32,8 @@ class CategoryAdmin(admin.ModelAdmin):
 # ------------------- CategoryChildren -------------------
 @admin.register(CategoryChildren)
 class CategoryChildrenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'category', 'order', 'created_at', 'updated_at','is_deleted')
-    list_editable = ('order','is_deleted')
+    list_display = ('id', 'name', 'category', 'order', 'created_at', 'updated_at','is_active','is_deleted')
+    list_editable = ('order','is_active','is_deleted')
     list_filter = ('category',)
     search_fields = ('name', 'category__name')
     ordering = ('category', 'order')
