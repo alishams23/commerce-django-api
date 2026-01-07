@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Category, CategoryChildren, Brand, Product, ProductColor, ProductImage, ProductComment, DiscountCode
+from .models import Category, CategoryChildren, Brand, Color, Product, ProductColor, ProductImage, ProductComment, DiscountCode
 
 # ------------------- Inlines -------------------
 class CategoryChildrenInline(admin.TabularInline):
@@ -11,13 +11,13 @@ class CategoryChildrenInline(admin.TabularInline):
     verbose_name = "دسته بندی فرزند"
     verbose_name_plural = "دسته بندی‌های فرزند"
 
-class ProductColorInline(admin.TabularInline):
-    model = ProductColor
-    extra = 1
-    fields = ('name', 'code', 'price', 'stock')
-    ordering = ('name',)
-    verbose_name = "رنگ محصول"
-    verbose_name_plural = "رنگ بندی محصولات"
+# class ProductColorInline(admin.TabularInline):
+#     model = ProductColor
+#     extra = 1
+#     fields = ('name', 'code', 'price', 'stock')
+#     ordering = ('name',)
+#     verbose_name = "رنگ محصول"
+#     verbose_name_plural = "رنگ بندی محصولات"
 
 # ------------------- Category -------------------
 @admin.register(Category)
@@ -56,16 +56,27 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'category__name', 'brand__name')
     ordering = ('category', 'name')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
-    inlines = [ProductColorInline]
+    # inlines = [ProductColorInline]
+
+
+# ------------------- Color -------------------
+@admin.register(Color)
+class ColorAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name','code','created_at', 'updated_at','is_deleted')
+    search_fields = ('name','code')
+    ordering = ('name',)
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+
+
 
 # ------------------- ProductColor -------------------
 @admin.register(ProductColor)
 class ProductColorAdmin(admin.ModelAdmin):
-    list_display = ('id', 'product', 'name', 'code', 'price', 'stock','is_deleted')
+    list_display = ('id', 'product', 'color','price', 'stock','is_deleted')
     list_editable = ('price', 'stock','is_deleted')
-    list_filter = ('product',)
-    search_fields = ('name', 'product__name')
-    ordering = ('product', 'name')
+    list_filter = ('product','color')
+    search_fields = ('product__name','color__name')
+    ordering = ('product','color')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 # ------------------- ProductImage -------------------
@@ -81,9 +92,9 @@ class ProductImageAdmin(admin.ModelAdmin):
 # ------------------- ProductComment -------------------
 @admin.register(ProductComment)
 class ProductCommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'product', 'text', 'is_approved', 'created_at', 'updated_at','is_deleted')
+    list_display = ('id', 'created_by', 'product', 'text', 'is_approved', 'created_at', 'updated_at','is_deleted')
     list_editable = ('is_approved','is_deleted')
-    list_filter = ('product', 'user', 'is_approved')
+    list_filter = ('product', 'created_by', 'is_approved')
     search_fields = ('user__username', 'product__name', 'text')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
