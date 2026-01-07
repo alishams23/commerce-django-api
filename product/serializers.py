@@ -1,70 +1,145 @@
 from rest_framework import serializers
-from product.models import Category, CategoryChildren, Product, ProductColor, ProductImage
+from product.models import (
+    Brand,
+    Category,
+    CategoryChildren,
+    Color,
+    Product,
+    ProductColor,
+    ProductComment,
+    ProductImage,
+)
+from user.serializers import UserCommentsSerializer
 
+# <------------ Brand and Color List ---------------->
+
+
+class BrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Brand
+        fields = ["id", "name"]
+
+
+class ColorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Color
+        fields = ["id", "name", "code"]
 
 # <------------ Category List ---------------->
+
 
 class CategoryChildrenListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryChildren
-        fields = ['id','name','order']
+        fields = ["id", "name", "order"]
+
 
 class CategoryListSerializer(serializers.ModelSerializer):
-    children = CategoryChildrenListSerializer(many = True)
-        
+    children = CategoryChildrenListSerializer(many=True)
+
     class Meta:
         model = Category
-        fields = ['id','name','order','children']
+        fields = ["id", "name", "order", "children"]
+
+
+
+
+# <------------ Comment ---------------->
+
+class CommentSerializer(serializers.ModelSerializer):
+    created_by = UserCommentsSerializer()
+    replies = serializers.SerializerMethodField("get_replies")
+
+    class Meta:
+        model = ProductComment
+        fields = ["id", "created_by", "text", "is_approved", "replies"]
+
+    def get_replies(self, obj):
+        if obj.replies.exists():
+            return CommentSerializer(obj.replies.all(), many=True).data
+        return None
+
+
+# class CommentReplySerializer(serializers.ModelSerializer):
+#     user = UserCommentsSerializer()
+#     class Meta:
+#         model = ProductComment
+#         fields = ['id','user','text','is_approved','replies']
+
+# class CommentSerializer(serializers.ModelSerializer):
+#     user = UserCommentsSerializer()
+#     replies = CommentReplySerializer(many = True)
+#     class Meta:
+#         model = ProductComment
+#         fields = ['id','user','text','is_approved','replies']
+
+
+class ImageProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ["id", "image", "order", "is_cover"]
+
+
+# <------------ ProductColors ---------------->
+class ProductColorSerializer(serializers.ModelSerializer):
+    images = ImageProductSerializer(many=True)
+    color = ColorSerializer()
+    class Meta:
+        model = ProductColor
+        fields = ["id", "color", "price", "stock", "images"]
 
 # <------------ Product List ---------------->
 
 class ProductListSerializer(serializers.ModelSerializer):
     cover_image = serializers.SerializerMethodField()
-    
+    colors = ProductColorSerializer(many = True)
     class Meta:
         model = Product
-        fields = ['id','name','fixed_price','cover_image']
-    
-    def get_cover_image(self,obj):
-        img = ProductImage.objects.filter(product_color__product_id = obj.id,is_cover = True).first()
+        fields = ["id", "name", "fixed_price", "cover_image",'colors']
+
+    def get_cover_image(self, obj):
+        img = ProductImage.objects.filter(
+            product_color__product_id=obj.id, is_cover=True).first()
         if img:
             return self.context.get("request").build_absolute_uri(img.image.url)
-        
-    
+
 # <------------ Product Detail ---------------->
-
-class ImageProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductImage
-        fields = ['id','image','order','is_cover']
-
-class ColorProductSerializer(serializers.ModelSerializer):
-    images  = ImageProductSerializer(many = True)
-    class Meta:
-        model = ProductColor
-        fields = ['id','name','code','price','stock','images']
-
 class ProductDetailSerializer(serializers.ModelSerializer):
-    colors = ColorProductSerializer(many = True)
+    colors = ProductColorSerializer(many=True)
+    comments = CommentSerializer(many=True)
+
     class Meta:
         model = Product
-        fields = ['id','name','brand','fixed_price','percentage','is_published','is_favorite','specifications','description','colors']
-        
+        fields = [
+            "id",
+            "name",
+            "brand",
+            "fixed_price",
+            "percentage",
+            "is_published",
+            "is_favorite",
+            "specifications",
+            "description",
+            "colors",
+            "comments",
+        ]
+
+
 # <------------ Category Detail ---------------->
 
+
 class CategoryChildrenDetailSerializer(serializers.ModelSerializer):
-    products = ProductListSerializer(many = True)
+    products = ProductListSerializer(many=True)
+
     class Meta:
         model = CategoryChildren
-        fields = ['id','name','order','products']
+        fields = ["id", "name", "order", "products"]
+
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
-    children = CategoryChildrenDetailSerializer(many = True)
-        
+    children = CategoryChildrenDetailSerializer(many=True)
+
     class Meta:
         model = Category
-        fields = ['id','name','order','children']
-        
-
-
+        fields = ["id", "name", "order", "children"]
 
