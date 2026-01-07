@@ -2,7 +2,6 @@ from django.db import models
 from django.utils import timezone
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
-from user.models import User
 
 # Create your models here.
 
@@ -42,6 +41,7 @@ class BlogMedia(AuditableModel, SoftDeleteModel):
 class BlogComment(AuditableModel, SoftDeleteModel):
     blog = models.ForeignKey(Blog,on_delete = models.CASCADE,related_name = "comments",verbose_name = "وبلاگ")
     text = models.TextField(verbose_name = "متن نظر")
+    reply = models.ForeignKey("self",on_delete = models.CASCADE,blank = True,null = True,related_name = "replies",verbose_name = "در جواب نظر")
     is_approved = models.BooleanField(default=True,verbose_name = "وضعیت تایید نظر")
 
     def __str__(self):
