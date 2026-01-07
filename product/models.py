@@ -5,6 +5,7 @@ from django.utils import timezone
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from .utils import generate_discount_code
+from colorfield.fields import ColorField
 # Create your models here.
 
 
@@ -108,12 +109,17 @@ class Product(AuditableModel, SoftDeleteModel):
         ]
 
 class Color(AuditableModel,SoftDeleteModel):
-    name = models.CharField(max_length=50,verbose_name="اسم رنگ")
-    code = models.CharField(max_length=20, null=True, blank=True, verbose_name="کد رنگ (HEX)")
+    name = models.CharField(max_length=50,unique = True,verbose_name="اسم رنگ")
+    code = ColorField(default = '#ffffff',unique = True,verbose_name="کد رنگ (HEX)")
 
     def __str__(self):
         return f"رنگ  {self.id} - {self.name}"
 
+    def save(self, *args, **kwargs):
+        if self.code:
+            self.code = self.code.lower()
+        super().save(*args, **kwargs)
+    
     class Meta:
         verbose_name = "رنگ"
         verbose_name_plural = "رنگ ها "

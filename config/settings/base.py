@@ -31,6 +31,7 @@ THIRD_PARTY_APPS = [
     'django_filters',
     'dj_rest_auth',
     "drf_spectacular",
+    'colorfield',
     # "corsheaders",
     # "azbankgateways",
 ]
