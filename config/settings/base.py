@@ -30,9 +30,9 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     'django_filters',
     'dj_rest_auth',
+    "drf_spectacular",
     # "corsheaders",
     # "azbankgateways",
-    # "drf_spectacular",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_NAME_APPS + THIRD_PARTY_APPS
@@ -90,7 +90,8 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 AUTH_PASSWORD_VALIDATORS = [
