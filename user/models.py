@@ -6,7 +6,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 
