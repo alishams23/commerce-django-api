@@ -22,7 +22,7 @@ from .filters import ProductFilter
         Returns active categories with their active children.
         Used for category navigation and menus.
     """,
-    tags=["Category"],
+    tags=["Home"],
 )
 class CategoryListView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -137,7 +137,7 @@ class ProductDetailView(generics.RetrieveAPIView):
         Returns list of available brands.
         Used for product filtering.
     """,
-    tags=["Brand"],
+    tags=["Product"],
 )
 class BrandListView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -151,13 +151,21 @@ class BrandListView(generics.ListAPIView):
         Returns list of available colors.
         Used for product variations and filters.
     """,
-    tags=["Color"],
+    tags=["Product"],
 )
 class ColorListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ColorSerializer
     queryset = Color.objects.filter(is_deleted = False)
 
+@extend_schema(
+    summary="Gallery",
+    description="""
+        Returns list of Images.
+        Used for Gallery.
+    """,
+    tags=["Home"],
+)
 
 class GalleryView(generics.ListAPIView):
     permission_classes = [AllowAny]
