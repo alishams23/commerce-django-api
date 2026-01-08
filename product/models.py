@@ -284,3 +284,19 @@ class DiscountCode(AuditableModel, SoftDeleteModel):
     class Meta:
         verbose_name = "کدتخفیف"
         verbose_name_plural = "کدهای تخفیف"
+
+
+
+class Gallery(AuditableModel,SoftDeleteModel):
+    image = models.ImageField(upload_to = "home/gallery/",verbose_name = "عکس")
+    order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش عکس")
+    is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار عکس",db_index=True)
+    
+    def __str__(self):
+        return f"عکس گالری {self.id} - {self.image}"
+    
+    class Meta:
+        verbose_name = "عکس گالری"
+        verbose_name_plural = "گالری / عکس های گالری"
+        ordering = ("order","-created_at")
+        

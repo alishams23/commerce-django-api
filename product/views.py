@@ -1,12 +1,13 @@
 from rest_framework import generics, filters
 from rest_framework.permissions import AllowAny
-from product.models import Brand, Category, CategoryChildren, Color, Product
+from product.models import Brand, Category, CategoryChildren, Color, Gallery, Product
 from django.db.models import Prefetch
 from product.pagination import SearchPagination
 from product.serializers import (
     BrandSerializer,
     CategoryListSerializer,
     ColorSerializer,
+    GallerySerializer,
     ProductDetailSerializer,
     ProductListSerializer,
 )
@@ -141,7 +142,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 class BrandListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = BrandSerializer
-    queryset = Brand.objects.all()
+    queryset = Brand.objects.filter(is_deleted = False)
 
 
 @extend_schema(
@@ -155,4 +156,10 @@ class BrandListView(generics.ListAPIView):
 class ColorListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ColorSerializer
-    queryset = Color.objects.all()
+    queryset = Color.objects.filter(is_deleted = False)
+
+
+class GalleryView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = GallerySerializer
+    queryset = Gallery.objects.filter(is_published = True,is_deleted = False).only('id','image','order')

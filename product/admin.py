@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Category, CategoryChildren, Brand, Color, Product, ProductColor, ProductImage, ProductComment, DiscountCode
+from .models import Category, CategoryChildren, Brand, Color, Gallery, Product, ProductColor, ProductImage, ProductComment, DiscountCode
 
 # ------------------- Inlines -------------------
 class CategoryChildrenInline(admin.TabularInline):
@@ -108,4 +108,14 @@ class DiscountCodeAdmin(admin.ModelAdmin):
     list_filter = ('is_percentage', 'is_all_products', 'expired_at')
     search_fields = ('name', 'code', 'products__name')
     ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+
+
+# ------------------- Gallery -------------------
+
+@admin.register(Gallery)
+
+class GalleryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'image','order','created_at', 'updated_at','is_deleted')
+    list_editable = ('order','is_deleted')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
