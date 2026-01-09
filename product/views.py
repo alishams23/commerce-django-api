@@ -49,7 +49,7 @@ class CategoryListView(generics.ListAPIView):
         - ordering (fixed_price, created_at)
         - filters (price range, brand, color)
     """,
-    tags=["Product"],
+    tags=["Home"],
 )
 class ProductsListView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -142,7 +142,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 class BrandListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = BrandSerializer
-    queryset = Brand.objects.filter(is_deleted = False)
+    queryset = Brand.objects.filter(is_deleted = False).only('id','name')
 
 
 @extend_schema(
@@ -156,7 +156,7 @@ class BrandListView(generics.ListAPIView):
 class ColorListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ColorSerializer
-    queryset = Color.objects.filter(is_deleted = False)
+    queryset = Color.objects.filter(is_deleted = False).only('id','name','code')
 
 @extend_schema(
     summary="Gallery",

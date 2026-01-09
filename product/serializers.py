@@ -106,9 +106,9 @@ class ProductListSerializer(serializers.ModelSerializer):
 
 # <------------ Product Detail ---------------->
 class ProductDetailSerializer(serializers.ModelSerializer):
+    brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
     comments = CommentSerializer(many=True)
-
     class Meta:
         model = Product
         fields = [

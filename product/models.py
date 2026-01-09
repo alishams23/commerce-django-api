@@ -83,10 +83,9 @@ class Product(AuditableModel, SoftDeleteModel):
         blank=True, null=True, verbose_name="توضیحات/معرفی محصول"
     )
     fixed_price = models.PositiveBigIntegerField(
-        blank=True,
-        null=True,
+        default = 0,
         verbose_name="قیمت ثابت",
-        help_text="اگر برای این محصول قیمت ثابتی در نظر گرفته نشد،برای یکی از رنگ های آن حتما باید قیمت در نظر گرفته شود!",db_index=True
+        help_text="!اگر قیمت ثابت محصول و یا تمام رنگ های آن 0 باشد محصول رایگان در نظر گرفته میشود",db_index=True
     )
     percentage = models.PositiveIntegerField(
         default=0, verbose_name="درصد تخفیف ویژه این محصول"
@@ -131,9 +130,16 @@ class ProductColor(AuditableModel, SoftDeleteModel):
     price = models.PositiveBigIntegerField(blank=True, null=True, verbose_name="قیمت این رنگ از محصول",help_text = ".اگر قیمتی برای این رنگ در نظر گرفته نشود، پیش فرض قیمت پایه محصول روی این رنگ اعمال می شود")
     stock = models.PositiveIntegerField(default=0, verbose_name="موجودی این رنگ از محصول")
 
+    
+    
+    
     def __str__(self):
         return f"رنگ محصول {self.product} - {self.color}"
 
+    def save(self, *args, **kwargs):
+        if self.price is None:
+            self.price = self.product.fixed_price
+        super().save(*args, **kwargs)
     # def save(self, *args, **kwargs):
     #     # TODO: Validation In Django Panel!
     #     if self.price:
