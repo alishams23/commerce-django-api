@@ -53,10 +53,11 @@ class SignUpVerifyCodeAdmin(admin.ModelAdmin):
 class ContactUsAdmin(admin.ModelAdmin):
     list_display = ("first_name", "last_name", "phone_number", "email", "is_called", "created_at")
     search_fields = ("first_name", "last_name", "phone_number", "email")
+    list_editable = ("is_called",)
     list_filter = ("is_called", "created_at")
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     fieldsets = (
-        (_("اطلاعات کاربر"), {"fields": ("user", "first_name", "last_name", "phone_number", "email")}),
+        (_("اطلاعات کاربر"), {"fields": ("created_by", "first_name", "last_name", "phone_number", "email")}),
         (_("توضیحات"), {"fields": ("description",)}),
         (_("وضعیت تماس"), {"fields": ("is_called",)}),
         (_("تاریخ‌ها"), {"fields": ("created_at", "updated_at")}),

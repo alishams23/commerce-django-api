@@ -1,10 +1,7 @@
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-# Create your models here.
 
-from django.db import models
-from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
@@ -45,11 +42,10 @@ class SignUpVerifyCode(AuditableModel, SoftDeleteModel):
 
 
 class ContactUs(AuditableModel, SoftDeleteModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name="contact_us_requests", verbose_name=_("User"))
     first_name = models.CharField(max_length=50, verbose_name=_("First Name"))
     last_name = models.CharField(max_length=50, verbose_name=_("Last Name"))
-    phone_number = models.CharField(max_length=11, verbose_name=_("Phone Number"))
-    email = models.EmailField(blank=True, null=True, verbose_name=_("Email"))
+    phone_number = models.CharField(max_length=11,unique = True,verbose_name=_("Phone Number"))
+    email = models.EmailField(blank=True, null=True,unique = True,verbose_name=_("Email"))
     description = models.TextField(verbose_name=_("Description"))
     is_called = models.BooleanField(default=False, verbose_name=_("Called"))
 
