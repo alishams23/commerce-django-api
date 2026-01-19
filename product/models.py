@@ -26,7 +26,7 @@ class CategoryChildren(AuditableModel, SoftDeleteModel):
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
-        related_name="childrens",
+        related_name="children",
         verbose_name="دسته بندی والد",
     )
     name = models.CharField(max_length=50,unique = True,verbose_name="نام دسته بندی فرزند")
@@ -84,9 +84,10 @@ class Product(AuditableModel, SoftDeleteModel):
     )
     fixed_price = models.PositiveBigIntegerField(
         default = 0,
-        verbose_name="قیمت ثابت",
+        verbose_name="قیمت ثابت(تومان)",
         help_text="!اگر قیمت ثابت محصول و یا تمام رنگ های آن 0 باشد محصول رایگان در نظر گرفته میشود",db_index=True
     )
+
     percentage = models.PositiveIntegerField(
         default=0, verbose_name="درصد تخفیف ویژه این محصول"
     )
@@ -127,7 +128,7 @@ class Color(AuditableModel,SoftDeleteModel):
 class ProductColor(AuditableModel, SoftDeleteModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="colors",verbose_name = "محصول",db_index=True)
     color = models.ForeignKey(Color,on_delete = models.PROTECT,related_name = "products",verbose_name = "رنگ",db_index=True)
-    price = models.PositiveBigIntegerField(blank=True, null=True, verbose_name="قیمت این رنگ از محصول",help_text = ".اگر قیمتی برای این رنگ در نظر گرفته نشود، پیش فرض قیمت پایه محصول روی این رنگ اعمال می شود")
+    price = models.PositiveBigIntegerField(blank=True, null=True, verbose_name="(تومان)قیمت این رنگ از محصول",help_text = ".اگر قیمتی برای این رنگ در نظر گرفته نشود، پیش فرض قیمت پایه محصول روی این رنگ اعمال می شود")
     stock = models.PositiveIntegerField(default=0, verbose_name="موجودی این رنگ از محصول")
 
     

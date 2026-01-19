@@ -22,6 +22,7 @@ PROJECT_NAME_APPS = [
     "blog",
     "product",
     "user",
+    "order",
 ]
 
 THIRD_PARTY_APPS = [
