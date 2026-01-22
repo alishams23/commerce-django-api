@@ -4,30 +4,49 @@ from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from product.models import DiscountCode, ProductColor
 
+from colorfield.fields import ColorField
+
 # Create your models here.
 
 
 class Delivery(AuditableModel, SoftDeleteModel):
     name = models.CharField(
         max_length=75,
-        unique = True,
+        unique=True,
         verbose_name="نوع ارسال",
         help_text="...به عنوان مثال: پست ، تیپاکس و",
     )
-    price = models.PositiveBigIntegerField(verbose_name="هزینه ارسال(تومان)")
-    is_active = models.BooleanField(default = True,verbose_name = "فعال")
+    cost = models.PositiveBigIntegerField(verbose_name="هزینه ارسال(تومان)")
+    is_active = models.BooleanField(default=True, verbose_name="فعال")
+
     def __str__(self):
-        return f"نوع حمل نقل {self.name} - {self.price}"
-    
+        return f"نوع حمل و نقل {self.name} - {self.cost}"
+
     class Meta:
         verbose_name = "نوع حمل و نقل"
-        verbose_name_plural = "انوع حمل و نقل"
+        verbose_name_plural = "انواع حمل و نقل"
+
+
+class DifferentAddress(AuditableModel, SoftDeleteModel):
+    # user/author = created_by
+    province = models.CharField(max_length=30, verbose_name="استان")
+    city = models.CharField(max_length=30, verbose_name="شهر")
+    address = models.TextField(verbose_name="آدرس")
+    zip_code = models.CharField(max_length=10, verbose_name="کدپستی")# unique? after save address check zip_code and change address
+
+    def __str__(self):
+        return f"کاربر {self.created_by.phone_number}"
+
+    class Meta:
+        verbose_name = "آدرس متفاوت"
+        verbose_name_plural = "آدرس های متفاوت"
+
 
 class Cart(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (
         ("pending_pay", "در انتظار پرداخت"),
         ("pay", "پرداخت شده"),
-        ("pay", "ارور خورده پرداخت نشده"),
+        ("pay_error", "خطا در حین پرداخت"),
     )
     # user/author = created_by
     discount_code = models.ForeignKey(
@@ -46,11 +65,25 @@ class Cart(AuditableModel, SoftDeleteModel):
         related_name="cart_used",
         verbose_name="نوع حمل و نقل",
     )
-    total_price = models.PositiveBigIntegerField(verbose_name="جمع کل(تومان)")
-    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICE,
+        default="pending_pay",
+        verbose_name="وضعیت پرداخت سبد خرید",
+    )
+
+    @property
+    def total_price(self):
+        total_price = 0
+        for item in self.items.all():
+            total_price += item.total_price
+        return total_price
+
     def __str__(self):
-        return f'سبد خرید کاربر {self.created_by.username} (:وضعیت پرداخت {"پرداخت شده" if self.is_pay else "پرداخت نشده"})'
-    
+        return (
+            f"سبد خرید کاربر {self.created_by.username} (:وضعیت پرداخت {self.status})"
+        )
+
     class Meta:
         verbose_name = "سبد خرید"
         verbose_name_plural = "سبد های خرید"
@@ -65,69 +98,96 @@ class CartItem(AuditableModel, SoftDeleteModel):
         related_name="cart_items",
         verbose_name="محصول",
     )
-    count = models.PositiveBigIntegerField(verbose_name="تعداد")
-    total_price = models.PositiveBigIntegerField(verbose_name="جمع جزء(تومان)")
-    
+    count = models.PositiveIntegerField(default = 1, verbose_name="تعداد")
+
+    @property
+    def total_price(self):
+        return self.count * self.product_color.price
+
     def __str__(self):
         return f"آیتم {self.cart}"
-    
+
     class Meta:
-        verbose_name  =  "آیتم سبد خرید"
-        verbose_name_plural  =  "آیتم های سبد های خرید"
+        verbose_name = "آیتم سبد خرید"
+        verbose_name_plural = "آیتم های سبد های خرید"
         unique_together = ("cart", "product_color")
 
 
-class CartDetail(AuditableModel, SoftDeleteModel):
-    cart = models.OneToOneField(
-        Cart, on_delete=models.CASCADE, related_name="detail", verbose_name="سبد خرید"
-    )
-    first_name = models.CharField(
-        max_length=50, blank=True, null=True, verbose_name="نام"
-    )
-    last_name = models.CharField(
-        max_length=50, blank=True, null=True, verbose_name="نام خانوادگی"
-    )
-    province = models.CharField(
-        max_length=20, blank=True, null=True, verbose_name="استان"
-    )
-    city = models.CharField(max_length=30, blank=True, null=True, verbose_name="شهر")
-    address = models.TextField(blank=True, null=True, verbose_name="آدرس")
-    zip_code = models.CharField(
-        max_length=10, blank=True, null=True, verbose_name="کدپستی"
-    )
-    phone_number = models.CharField(max_length=11, verbose_name="شماره تلفن")
-    email = models.EmailField(blank=True, null=True, verbose_name="ایمیل")
-    description = models.TextField(blank=True, null=True, verbose_name="توضیحات سفارش")
-    deferent_address = models.BooleanField(default=False, verbose_name="آدرس متفاوت")
-    
-    def __str__(self):
-        return f"اطلاعات {self.cart}"
-    
-    class Meta:
-        verbose_name = "اطلاعات سبد خرید"
-        verbose_name_plural = "اطلاعات سبد های خرید"
-
 class Order(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (
-        ("pending_send", "آماده سازی جهت ارسال"),
+        ("doing", "در حال آماده سازی"),
         ("send", "ارسال شده"),
-        ("done", "تحویل داده شده"),
         ("canceled", "لغو شده"),
     )
     # user/author = created_by
-    cart = models.OneToOneField(
-        Cart, on_delete=models.PROTECT, related_name="order", verbose_name="سبد خرید"
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICE,
+        default="doing",
+        verbose_name="وضعیت سفارش",
     )
-    buy_date = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ثبت سفارش")
-    status = models.CharField(max_length = 20,choices = STATUS_CHOICE,default = "pending_send",verbose_name = 'وضعیت سفارش')
-    send_date = models.DateTimeField(blank=True, null=True, verbose_name="تاریخ ارسال")
-    id_send = models.CharField(
+    tracking_code = models.CharField(
         max_length=100, blank=True, null=True, verbose_name="کد رهیگیری ارسال"
     )
-        
+    send_date = models.DateTimeField(blank=True, null=True, verbose_name="تاریخ ارسال")
+
+    description = models.TextField(blank=True, null=True, verbose_name="توضیحات سفارش")
+
+    is_different_address = models.BooleanField(
+        default=False, verbose_name="آدرس متفاوت"
+    )
+    province = models.CharField(blank = True,null = True,max_length=20, verbose_name="استان")
+    city = models.CharField(blank = True,null = True,max_length=30, verbose_name="شهر")
+    address = models.TextField(blank = True,null = True,verbose_name="آدرس")
+    zip_code = models.CharField(blank = True,null = True,max_length=10, verbose_name="کدپستی")
+
+    total_price = models.PositiveBigIntegerField(default = 0,verbose_name="جمع مبلغ آیتم ها(تومان)")
+    discount_price = models.PositiveBigIntegerField(
+        default=0, verbose_name="مبلغ تخفیف(تومان)"
+    )
+    delivery_price = models.PositiveBigIntegerField(
+        default=0, verbose_name="هزینه ارسال/حمل و نقل(تومان)"
+    )
+    final_price = models.PositiveBigIntegerField(default = 0,verbose_name="مبلغ نهایی(تومان)")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.total_price == 0:
+            for item in self.items.all():
+                self.total_price += item.total_price
+
     def __str__(self):
         return f"سفارش  {self.id}"
-    
+
     class Meta:
         verbose_name = "سفارش"
         verbose_name_plural = "سفارشات"
+
+
+class OrderItem(AuditableModel, SoftDeleteModel):
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="items", verbose_name="سفارش"
+    )
+    product_name = models.CharField(max_length=100, verbose_name="نام محصول")
+    color_code = ColorField(default = "#ffffff" ,verbose_name="کد رنگ (HEX)")
+    product_price = models.PositiveBigIntegerField(default = 0,
+        verbose_name="قیمت پایه محصول", db_index=True
+    )
+    product_count = models.PositiveIntegerField(default = 0,verbose_name="تعداد محصول")
+    total_price = models.PositiveBigIntegerField(default = 0,verbose_name="جمع جزء(تومان)")
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.total_price = self.product_count * self.product_price
+        super().save(*args, **kwargs)
+
+    def calculate_total_price(self):
+        return self.product_count * self.product_price
+
+    def __str__(self):
+        return f"آیتم سفارش  {self.order.id}"
+
+    class Meta:
+        verbose_name = "آیتم سفارش"
+        verbose_name_plural = "آیتم های سفارشات"
