@@ -216,7 +216,7 @@ class DiscountCode(AuditableModel, SoftDeleteModel):
         max_length=50, blank=True, null=True, verbose_name="نام کدتخفیف"
     )
     code = models.CharField(max_length=20, unique=True, db_index=True)
-    amount = models.PositiveIntegerField(verbose_name="مقدار تخفیف")
+    amount = models.PositiveIntegerField(default = 0,verbose_name="مقدار تخفیف")
     is_percentage = models.BooleanField(
         default=True,
         verbose_name="درصد",

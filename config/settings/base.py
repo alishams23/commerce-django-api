@@ -152,3 +152,5 @@ def env_bool(name, default=False):
 
 SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
 CSRF_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
+
+APPEND_SLASH = False
