@@ -5,6 +5,7 @@ from product.models import Color, Product, ProductColor
 
 class IDSerializer(serializers.Serializer):
     id = serializers.IntegerField()
+    deleted = serializers.BooleanField(required = False)
 
 class DeliverySerializer(serializers.ModelSerializer):
     
@@ -39,6 +40,10 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many = True)
+    item_count = serializers.SerializerMethodField()
     class Meta:
         model = Cart
-        fields = ['id','status','discount_code','delivery_type','total_price','items']
+        fields = ['id','status','discount_code','delivery_type','total_price','item_count','items']
+        
+    def get_item_count(self,obj):
+        return obj.items.count()
