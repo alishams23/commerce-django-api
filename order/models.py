@@ -2,9 +2,16 @@ from django.db import models
 
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
-from product.models import DiscountCode, ProductColor
+from product.models import Product, ProductColor
 
 from colorfield.fields import ColorField
+
+from datetime import timedelta
+
+from django.utils import timezone
+
+from .utils import generate_discount_code
+
 
 # Create your models here.
 
@@ -27,21 +34,6 @@ class Delivery(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "انواع حمل و نقل"
 
 
-class DifferentAddress(AuditableModel, SoftDeleteModel):
-    # user/author = created_by
-    province = models.CharField(max_length=30, verbose_name="استان")
-    city = models.CharField(max_length=30, verbose_name="شهر")
-    address = models.TextField(verbose_name="آدرس")
-    zip_code = models.CharField(max_length=10, verbose_name="کدپستی")# unique? after save address check zip_code and change address
-
-    def __str__(self):
-        return f"کاربر {self.created_by.phone_number}"
-
-    class Meta:
-        verbose_name = "آدرس متفاوت"
-        verbose_name_plural = "آدرس های متفاوت"
-
-
 class Cart(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (
         ("pending_pay", "در انتظار پرداخت"),
@@ -50,7 +42,7 @@ class Cart(AuditableModel, SoftDeleteModel):
     )
     # user/author = created_by
     discount_code = models.ForeignKey(
-        DiscountCode,
+        "DiscountCode",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -73,15 +65,15 @@ class Cart(AuditableModel, SoftDeleteModel):
     )
 
     @property
-    def total_price(self):
+    def total_price(self,discount_price:int = 0):
         total_price = 0
         for item in self.items.all():
             total_price += item.total_price
-        return total_price
+        return total_price - discount_price
 
     def __str__(self):
         return (
-            f"سبد خرید کاربر {self.created_by.username} (:وضعیت پرداخت {self.status})"
+            f"{self.created_by.phone_number} سبد خرید کاربر "
         )
 
     class Meta:
@@ -191,3 +183,96 @@ class OrderItem(AuditableModel, SoftDeleteModel):
     class Meta:
         verbose_name = "آیتم سفارش"
         verbose_name_plural = "آیتم های سفارشات"
+
+
+class DiscountCode(AuditableModel, SoftDeleteModel):
+    
+    TYPE_CHOICE = (("cart","سبدخرید"),("product","محصول/محصولات"))
+    
+    name = models.CharField(
+        max_length=50, blank=True, null=True, verbose_name="نام کدتخفیف"
+    )
+    code = models.CharField(max_length=20, unique=True,blank = True,db_index=True)
+    
+    included_type = models.CharField(max_length = 10,choices = TYPE_CHOICE,default = 'cart',verbose_name = "تخفیف شامل")
+    
+    amount = models.PositiveIntegerField(default = 0,verbose_name="مقدار تخفیف")
+    is_percentage = models.BooleanField(
+        default=True,
+        verbose_name="درصد",
+        help_text="!با غیرفعال کردن این گزینه مقدار تخفیف به تومان محاسبه میشود",
+    )
+    max_usage = models.PositiveIntegerField(
+        default=0,
+        verbose_name="حداکثر تعداد استفاده ",
+        help_text="اگر تعداد حداکثر استفاده 0 باشد ،کد تا پایان زمان انقضاء حداکثر 1 بار برای تمامی کاربران قابل استفاده است! ولی اگر تعداد حداکثر بیشتر از 0 باشد تا پایان زمان انقضا کد وقتی تعداد دفعات استفاده برابر با تعداد حداکثر شداعتبار کد به پایان می رسد",
+    )
+    current_usage = models.PositiveIntegerField(
+        default=0, verbose_name="تعداد دفعات استفاده شده"
+    )
+    expired_at = models.DateTimeField(
+        default=timezone.now() + timedelta(days=2),
+        verbose_name="زمان انقضا",
+        help_text="!زمان انقضا به صورت پیش فرض دو روز بعد از زمان سیستم است",
+    )
+    products = models.ManyToManyField(
+        Product,
+        blank=True,
+        related_name="discount_codes",
+        verbose_name="محصولات شامل این کد تخفیف",
+    )
+
+    def save(self, *args, **kwargs):
+        if self.code == "":
+            while True:
+                code = generate_discount_code()
+                if not self.__class__.objects.filter(code=code).exists():
+                    self.code = code
+                    break            
+        super().save(*args, **kwargs)
+
+    def code_validation(self):
+        if (self.max_usage != 0 and (self.current_usage == self.max_usage)) or timezone.now() > self.expired_at:
+            return False
+        return True
+    
+    def increment_usage(self):
+        self.current_usage += 1
+        self.save()
+
+
+    def apply_discount(self, product:Product = None, amount:float = None):
+        """_summary_
+        args:
+            amount: For Product With diffrent Color if color price diffrent fixed_price # checkd
+        """
+    
+        if not self.code_validation():
+            return {"Error": "Discount Code is invalid! "}
+        
+        if amount is None and product is None:
+            return {"Error": "Amount Or Product Requirement!"}
+        
+        if self.included_type == 'product':
+            if not self.products.filter(id=product.id).exists():
+                return {"Error": "This Product not included this Discount Code!"}
+            
+        if amount is None and product is not None:
+            print("amount  = fixed price")
+            amount = product.fixed_price
+        
+
+        if self.is_percentage:
+            self.increment_usage()
+            return amount - amount * (self.amount / 100)
+            
+        self.increment_usage()
+        return amount - self.amount
+
+    
+    def __str__(self):
+        return f"Code: {self.code}"
+    
+    class Meta:
+        verbose_name = "کدتخفیف"
+        verbose_name_plural = "کدهای تخفیف"

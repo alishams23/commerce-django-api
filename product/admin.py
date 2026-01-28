@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Category, CategoryChildren, Brand, Color, Gallery, Product, ProductColor, ProductImage, ProductComment, DiscountCode
-
+from .models import Category, CategoryChildren, Brand, Color, Gallery, Product, ProductColor, ProductImage, ProductComment
 # ------------------- Inlines -------------------
 class CategoryChildrenInline(admin.TabularInline):
     model = CategoryChildren
@@ -96,17 +95,6 @@ class ProductCommentAdmin(admin.ModelAdmin):
     list_editable = ('is_approved','is_deleted')
     list_filter = ('product', 'created_by', 'is_approved')
     search_fields = ('user__username', 'product__name', 'text')
-    ordering = ('-created_at',)
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
-
-# ------------------- DiscountCode -------------------
-@admin.register(DiscountCode)
-class DiscountCodeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'code', 'amount', 'is_percentage', 'max_usage', 'current_usage', 'expired_at', 'is_all_products', 'created_at', 'updated_at','is_deleted')
-    list_editable = ('is_percentage', 'is_all_products','is_deleted')
-    filter_horizontal = ('products',)
-    list_filter = ('is_percentage', 'is_all_products', 'expired_at')
-    search_fields = ('name', 'code', 'products__name')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 

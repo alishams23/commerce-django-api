@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.db.models import Sum, F
 from django.utils.html import format_html
-from .models import Delivery, DifferentAddress, Cart, CartItem, Order, OrderItem
+from .models import Delivery, Cart, CartItem, DiscountCode, Order, OrderItem
+from django import forms
 
 
 
@@ -52,15 +53,6 @@ from .models import Delivery, DifferentAddress, Cart, CartItem, Order, OrderItem
 #     search_fields = ("name",)
 
 
-# @admin.register(DifferentAddress)
-# class DifferentAddressAdmin(admin.ModelAdmin):
-#     list_display = ("user", "province", "city", "zip_code")
-#     search_fields = ("created_by__phone_number", "created_by__username", "city")
-
-#     def user(self, obj):
-#         return obj.created_by.username
-
-#     user.short_description = "کاربر"
 
 
 # @admin.register(Cart)
@@ -184,13 +176,6 @@ class DeliveryAdmin(admin.ModelAdmin):
     list_editable = ('is_active',)
     list_filter = ('is_active',)
     
-@admin.register(DifferentAddress)
-class DifferentAddressAdmin(admin.ModelAdmin):
-    list_display = ('id','zip_code')
-    list_display = ('province','city')
-    search_fields = ('province','city','address','zip_code',)
-
-
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
     list_display = ('id','created_by__username','total_price','status')
@@ -210,3 +195,23 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     pass
+
+
+
+# ------------------- DiscountCode -------------------
+@admin.register(DiscountCode)
+class DiscountCodeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'code', 'amount', 'is_percentage', 'max_usage', 'current_usage', 'expired_at', 'included_type','is_deleted')
+    list_editable = ('is_percentage', 'included_type','is_deleted')
+    filter_horizontal = ('products',)
+    list_filter = ('is_percentage', 'included_type', 'expired_at')
+    search_fields = ('name', 'code', 'products__name')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    
+    def clean_amount(self,cleaned_data):
+        print(self.cleaned_data)
+        print(cleaned_data)
+        if cleaned_data['is_percentage'] and cleaned_data['amount'] > 100:
+            raise forms.ValidationError("مقدار تخفیف نمی تواند بیشتر از 100 درصد باشد")
+        return cleaned_data['amount']
