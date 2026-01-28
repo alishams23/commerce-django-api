@@ -30,8 +30,8 @@ MEDIA_ROOT = os.path.join(base.BASE_DIR, 'media/')
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),   
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),     
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),   
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),     
     "ROTATE_REFRESH_TOKENS": True,                   
     "BLACKLIST_AFTER_ROTATION": True,                
     "AUTH_HEADER_TYPES": ("Token",),                
