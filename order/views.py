@@ -7,15 +7,36 @@ from order.models import Cart, CartItem, Delivery, DiscountCode
 from order.serializers import CartSerializer, DeliverySerializer
 
 from product.models import ProductColor
-from order.serializers import IDSerializer
+from order.serializers import AddToCartSerializer,RemoveFromCartSerializer
+
+from drf_spectacular.utils import extend_schema
 # Create your views here.
 
+@extend_schema(
+    summary="List delivery methods",
+    description="""
+        Returns all active delivery methods.
+
+        Used in checkout to let the user choose a delivery option.
+    """,
+    tags=["Order"],
+)
 
 class DeliveryView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = DeliverySerializer
     queryset = Delivery.objects.filter(is_active=True)
 
+@extend_schema(
+    summary="Get user cart",
+    description="""
+        Returns the current user's cart.
+
+        If the cart does not exist, it will be created automatically.
+        Used to display cart details and start checkout flow.
+    """,
+    tags=["Order"],
+)
 
 class CartView(APIView):
     serializer_class = CartSerializer
@@ -30,10 +51,19 @@ class CartView(APIView):
             status=status.HTTP_200_OK,
         )
 
+@extend_schema(
+    summary="Add item to cart",
+    description="""
+        Adds a product color to the user's cart or increases its quantity by one.
+
+        Used when the user clicks the "Add to cart" button.
+    """,
+    tags=["Order"],
+)
 
 # ----- Item To Cart ------#
 class CartAddItem(generics.UpdateAPIView):
-    serializer_class = IDSerializer
+    serializer_class = AddToCartSerializer
 
     def get_queryset(self):
         return Cart.objects.filter(created_by=self.request.user)
@@ -77,8 +107,19 @@ class CartAddItem(generics.UpdateAPIView):
             status=status.HTTP_200_OK,
         )
 
+@extend_schema(
+    summary="Remove item from cart",
+    description="""
+        Decreases the quantity of a cart item by one.
+
+        If the quantity reaches zero, the item will be removed from the cart.
+        Used when the user clicks the decrease or remove button.
+    """,
+    tags=["Order"],
+)
 
 class CartRemoveItem(CartAddItem):
+    serializer_class = RemoveFromCartSerializer
     def update(self, request, *args, **kwargs):
         data = self.request.data
         serializer = self.serializer_class(data=data)

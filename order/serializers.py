@@ -3,9 +3,19 @@ from rest_framework import serializers
 from order.models import Cart, CartItem, Delivery
 from product.models import Color, Product, ProductColor
 
-class IDSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    deleted = serializers.BooleanField(required = False)
+
+class AddToCartSerializer(serializers.Serializer):
+        
+    id = serializers.IntegerField(
+        help_text="ProductColor ID of the selected product variant"
+    )
+    
+class RemoveFromCartSerializer(serializers.Serializer):
+    
+    id = serializers.IntegerField(
+        help_text="CartItem ID to decrease or remove from the cart"
+    )
+    deleted = serializers.BooleanField(required = False,help_text="Force remove item from cart instead of decreasing quantity")
 
 class DeliverySerializer(serializers.ModelSerializer):
     
