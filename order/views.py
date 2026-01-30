@@ -12,17 +12,18 @@ from order.serializers import IDSerializer
 
 
 class DeliveryView(generics.ListAPIView):
-    permission_classes = AllowAny
+    permission_classes = [AllowAny]
     serializer_class = DeliverySerializer
     queryset = Delivery.objects.filter(is_active=True)
 
 
 class CartView(APIView):
+    serializer_class = CartSerializer
     def get(self, request):
         return Response(
             {
                 "result": "Success",
-                "cart_detail": CartSerializer(
+                "cart_detail": self.serializer_class(
                     instance=Cart.objects.get_or_create(created_by=self.request.user)[0]
                 ).data,
             },
