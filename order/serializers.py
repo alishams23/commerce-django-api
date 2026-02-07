@@ -35,7 +35,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['name']
 
-class ProductColorSerializer(serializers.ModelSerializer):
+class ProductColorOrderSerializer(serializers.ModelSerializer):
     product = ProductSerializer() 
     color = ColorOrderSerializer()
     class Meta:
@@ -43,7 +43,7 @@ class ProductColorSerializer(serializers.ModelSerializer):
         fields = ['id','product','color','price']
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product_color = ProductColorSerializer()
+    product_color = ProductColorOrderSerializer()
     class Meta:
         model = CartItem
         fields = ['id','product_color','count','total_price']
