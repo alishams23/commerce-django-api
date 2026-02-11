@@ -26,10 +26,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: django
-    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
       - static_data:/app/static
