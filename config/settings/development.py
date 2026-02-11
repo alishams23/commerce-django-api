@@ -10,12 +10,12 @@ from .base import *
 
 DEBUG = os.environ.get("DEBUG")
 
-allowed_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
-ALLOWED_HOSTS = tuple(url.strip() for url in allowed_hosts.split(","))
+# allowed_hosts = ""
+ALLOWED_HOSTS = ['*']
 
-csrf_trusted_origins = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "")
-CORS_ALLOWED_ORIGINS = tuple(url.strip() for url in csrf_trusted_origins.split(","))
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+# csrf_trusted_origins = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "")
+# CORS_ALLOWED_ORIGINS = tuple(url.strip() for url in csrf_trusted_origins.split(","))
+# CSRF_TRUSTED_ORIGINS = ["*"]
 
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -73,3 +73,5 @@ SIMPLE_JWT = {
 # }
 #
 #endregion
+
+CORS_ALLOW_ALL_ORIGINS = True
