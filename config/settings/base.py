@@ -34,7 +34,7 @@ THIRD_PARTY_APPS = [
     "dj_rest_auth",
     "drf_spectacular",
     "colorfield",
-    # "corsheaders",
+    "corsheaders",
     # "azbankgateways",
 ]
 
@@ -42,6 +42,7 @@ INSTALLED_APPS = DJANGO_APPS + PROJECT_NAME_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
