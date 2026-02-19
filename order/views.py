@@ -3,14 +3,20 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.db.models import ExpressionWrapper, F, DecimalField
 from order.models import Cart, CartItem, Delivery, DiscountCode
-from order.serializers import CartSerializer, DeliverySerializer
+from order.serializers import (
+    ApplyDiscountSerializer,
+    CartSerializer,
+    DeliverySerializer,
+)
 
 from product.models import ProductColor
-from order.serializers import AddToCartSerializer,RemoveFromCartSerializer
+from order.serializers import AddToCartSerializer, RemoveFromCartSerializer
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 # Create your views here.
+
 
 @extend_schema(
     summary="List delivery methods",
@@ -21,11 +27,11 @@ from drf_spectacular.utils import extend_schema
     """,
     tags=["Order"],
 )
-
 class DeliveryView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = DeliverySerializer
     queryset = Delivery.objects.filter(is_active=True)
+
 
 @extend_schema(
     summary="Get user cart",
@@ -37,19 +43,44 @@ class DeliveryView(generics.ListAPIView):
     """,
     tags=["Order"],
 )
-
 class CartView(APIView):
     serializer_class = CartSerializer
+
+    def get_object(self):
+        return Cart.objects.get_or_create(created_by=self.request.user)[0]
+
     def get(self, request):
+        context = {"result": "Success"}
+        cart = self.get_object()
+
+        
+        if cart.discount_code is not None and not cart.discount_code.code_validation():
+            cart.discount_code = None
+            cart.save()
+            context["warning"] = "Discounted Code Expired!"
+        
+        
+        cart.items.update(discounted=0)
+        
+        if cart.discount_code is not None and cart.discount_code.included_type == "product":
+            discounted_item = cart.items.filter(
+                product_color__product_id__in=cart.discount_code.products.values_list(
+                    "id", flat=True
+                )
+            ).annotate(
+                total_price_items=ExpressionWrapper(
+                    F("count") * F("product_color__base_price"),
+                    output_field=DecimalField(),
+                )
+            )
+            discounted_item.order_by("-total_price_items").first().discount_calculate()
+        context["cart_detail"] = self.serializer_class(instance=cart).data
+
         return Response(
-            {
-                "result": "Success",
-                "cart_detail": self.serializer_class(
-                    instance=Cart.objects.get_or_create(created_by=self.request.user)[0]
-                ).data,
-            },
+            context,
             status=status.HTTP_200_OK,
         )
+
 
 @extend_schema(
     summary="Add item to cart",
@@ -58,6 +89,15 @@ class CartView(APIView):
 
         Used when the user clicks the "Add to cart" button.
     """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description="User Cart ID",
+            required=True,
+        ),
+    ],
     tags=["Order"],
 )
 
@@ -107,6 +147,7 @@ class CartAddItem(generics.UpdateAPIView):
             status=status.HTTP_200_OK,
         )
 
+
 @extend_schema(
     summary="Remove item from cart",
     description="""
@@ -115,32 +156,31 @@ class CartAddItem(generics.UpdateAPIView):
         If the quantity reaches zero, the item will be removed from the cart.
         Used when the user clicks the decrease or remove button.
     """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description="User Cart ID",
+            required=True,
+        ),
+    ],
     tags=["Order"],
 )
-
 class CartRemoveItem(CartAddItem):
     serializer_class = RemoveFromCartSerializer
+
     def update(self, request, *args, **kwargs):
         data = self.request.data
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)  # For Validation Item ID
-
-        # region comment
-        # product_color = get_object_or_404(ProductColor, id = data["product_color_id"])
-
-        # if product_color.stock == 0:
-        #     return Response(
-        #         {"Error": "Stock This Color From Product is 0"},
-        #         status=status.HTTP_400_BAD_REQUEST,
-        #     )
-        # endregion
 
         item = get_object_or_404(
             CartItem,
             id=data["id"],
             created_by=self.request.user,
             cart=self.get_object(),
-        )  # product_color=product_color
+        )
 
         item.count -= 1
         item.save()
@@ -152,6 +192,13 @@ class CartRemoveItem(CartAddItem):
             )
 
         # better performance?
+
+        # if serializer.data["deleted"]:
+        #     item.delete_hard()
+        #     return Response(
+        #         {"result": "Item Deleted from cart"}, status=status.HTTP_200_OK
+        #     )
+
         # item.count -= 1
         # item.save()
 
@@ -165,28 +212,44 @@ class CartRemoveItem(CartAddItem):
 
 
 class ApplyDiscount(generics.UpdateAPIView):
+    serializer_class = ApplyDiscountSerializer
+
     def get_queryset(self):
         return Cart.objects.filter(created_by=self.request.user)
 
     def update(self, request, *args, **kwargs):
-        data = self.request.data
-        discount_code = get_object_or_404(DiscountCode, code=data["code"])
+        serializer = self.serializer_class(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
         obj = self.get_object()
-
-        if discount_code.included_type == "cart":
-            discount_result = discount_code.apply_discount(amount=obj.total_price)
-
-        elif discount_code.included_type == "product":
-            qs = obj.items.filter(product_color__product_id__in = discount_code.products.values_list("id",flat = True))
-            if qs.exists():
-                product = qs.first().product_color.product
-                discount_result = discount_code.apply_discount(product = product if product else None)
-
-        if type(discount_result) is not float:
-            return Response(discount_result, status=status.HTTP_400_BAD_REQUEST)
         
-        obj.discount_code = discount_code
+        if obj.discount_code:
+            obj.discount_code = None
+            obj.save()
+            return Response({"result": "Discount UnApplied."})
         
-        obj.save()
-        
-        return Response({"result": discount_result})
+        discount_code = get_object_or_404(DiscountCode, code=serializer.validated_data["code"])
+
+        if discount_code.code_validation():
+            if discount_code.included_type == "product":
+                qs = obj.items.filter(
+                    product_color__product_id__in=discount_code.products.values_list(
+                        "id", flat=True
+                    )
+                )
+
+                if not qs.exists():
+                    return Response(
+                        {"Error": "Discount Code Is Not Included This Cart!"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            obj.discount_code = discount_code
+            obj.save()
+
+            # discount_code.increment_usage() # while buy finish
+
+            return Response({"result": "Discount Applied."})
+
+        return Response(
+            {"Error": "Discount Code is Invalid!"}, status=status.HTTP_400_BAD_REQUEST
+        )

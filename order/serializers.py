@@ -1,8 +1,14 @@
 from rest_framework import serializers
 
-from order.models import Cart, CartItem, Delivery
+from order.models import Cart, CartItem, Delivery, DiscountCode
 from product.models import Color, Product, ProductColor
 
+
+class DiscountCodeOrderSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = DiscountCode
+        fields = ['id','name','code']
 
 class AddToCartSerializer(serializers.Serializer):
         
@@ -35,25 +41,32 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['name']
 
-class ProductColorOrderSerializer(serializers.ModelSerializer):
+class ProductColorCartSerializer(serializers.ModelSerializer):
     product = ProductSerializer() 
     color = ColorOrderSerializer()
     class Meta:
         model = ProductColor
-        fields = ['id','product','color','price']
+        fields = ['id','product','color','price','discounted_price']
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product_color = ProductColorOrderSerializer()
+    product_color = ProductColorCartSerializer()
     class Meta:
         model = CartItem
-        fields = ['id','product_color','count','total_price']
+        fields = ['id','product_color','count','total_price','discounted_price']
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many = True)
+    discount_code = DiscountCodeOrderSerializer()
     item_count = serializers.SerializerMethodField()
     class Meta:
         model = Cart
-        fields = ['id','status','discount_code','delivery_type','total_price','item_count','items']
+        fields = ['id','status','discount_code','delivery_type','total_price','discounted_price','item_count','items']
         
     def get_item_count(self,obj):
         return obj.items.count()
+    
+class ApplyDiscountSerializer(serializers.ModelSerializer):
+    code = serializers.CharField(required = True)
+    class Meta:
+        model = DiscountCode
+        fields = ['code']
