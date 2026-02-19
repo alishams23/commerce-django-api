@@ -87,22 +87,15 @@ class ProductColorSerializer(serializers.ModelSerializer):
     color = ColorSerializer()
     class Meta:
         model = ProductColor
-        fields = ["id", "color", "price", "stock", "images"]
+        fields = ["id", "color", "price","discounted_price", "stock", "images"]
 
 # <------------ Product List ---------------->
 
 class ProductListSerializer(serializers.ModelSerializer):
-    cover_image = serializers.SerializerMethodField()
     colors = ProductColorSerializer(many = True)
     class Meta:
         model = Product
-        fields = ["id", "name", "fixed_price", "cover_image",'colors']
-
-    def get_cover_image(self, obj):
-        img = ProductImage.objects.filter(
-            product_color__product_id=obj.id, is_cover=True).first()
-        if img:
-            return self.context.get("request").build_absolute_uri(img.image.url)
+        fields = ["id", "name", "fixed_price","discount_percentage","discounted_price","colors"]
 
 # <------------ Product Detail ---------------->
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -116,7 +109,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "name",
             "brand",
             "fixed_price",
-            "percentage",
+            "discount_percentage ",
             "is_published",
             "is_favorite",
             "specifications",

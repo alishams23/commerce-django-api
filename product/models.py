@@ -84,7 +84,7 @@ class Product(AuditableModel, SoftDeleteModel):
         help_text="!اگر قیمت ثابت محصول و یا تمام رنگ های آن 0 باشد محصول رایگان در نظر گرفته میشود",db_index=True
     )
 
-    percentage = models.PositiveIntegerField(
+    discount_percentage  = models.PositiveIntegerField(
         default=0, verbose_name="درصد تخفیف ویژه این محصول"
     )
     is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار محصول",db_index=True)
@@ -93,7 +93,6 @@ class Product(AuditableModel, SoftDeleteModel):
     def __str__(self):
         return f"محصول {self.id} - {self.name}"
 
-    # TODO: Validation Save Similar ProductColor In Django Panel!
 
     class Meta:
         verbose_name = "محصول"
@@ -124,36 +123,26 @@ class Color(AuditableModel,SoftDeleteModel):
 class ProductColor(AuditableModel, SoftDeleteModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="colors",verbose_name = "محصول",db_index=True)
     color = models.ForeignKey(Color,on_delete = models.PROTECT,related_name = "products",verbose_name = "رنگ",db_index=True)
-    price = models.PositiveBigIntegerField(blank=True, null=True, verbose_name="(تومان)قیمت این رنگ از محصول",help_text = ".اگر قیمتی برای این رنگ در نظر گرفته نشود، پیش فرض قیمت پایه محصول روی این رنگ اعمال می شود")
+    base_price = models.PositiveBigIntegerField(default = 0, verbose_name="(تومان)قیمت این رنگ از محصول",help_text = ".اگر قیمتی برای این رنگ در نظر گرفته نشود، پیش فرض قیمت پایه محصول روی این رنگ اعمال می شود")
+    base_discount  = models.PositiveIntegerField(default = 0, verbose_name="درصد تخفیف ویژه این رنگ از محصول",help_text = ".اگر تخفیف ویژه برای این رنگ از محصول در نظر گرفته نشود، پیش فرض تخفیف ویژه پایه محصول روی این رنگ اعمال می شود")
     stock = models.PositiveIntegerField(default=0, verbose_name="موجودی این رنگ از محصول")
 
+
+    @property
+    def price(self):
+        return self.base_price if self.base_price != 0 else self.product.fixed_price
+
+    @property
+    def discount_percentage(self):
+        return self.base_discount if self.base_discount != 0 else self.product.discount_percentage
     
-    
+    @property
+    def discounted_price(self):
+        return self.price - (self.price * self.discount_percentage // 100)
     
     def __str__(self):
         return f"{self.product} - {self.color}"
 
-    def save(self, *args, **kwargs):
-        if self.price is None:
-            self.price = self.product.fixed_price
-        super().save(*args, **kwargs)
-    # def save(self, *args, **kwargs):
-    #     # TODO: Validation In Django Panel!
-    #     if self.price:
-    #         if not self.product.fixed_price or self.price < self.product.fixed_price:
-    #             self.product.fixed_price = self.price
-    #             self.product.save()
-
-    #     if (
-    #         self.product.is_published
-    #         and not self.product.fixed_price
-    #         and not self.product.colors.exclude(price__isnull=True).exists()
-    #     ):
-    #         raise ValidationError(
-    #             "محصول منتشر شده باید قیمت ثابتی داشته باشد یا حداقل یک رنگ دارای قیمت باشد."
-    #         )
-
-    #     super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "رنگ محصول"

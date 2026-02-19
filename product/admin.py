@@ -71,8 +71,8 @@ class ColorAdmin(admin.ModelAdmin):
 # ------------------- ProductColor -------------------
 @admin.register(ProductColor)
 class ProductColorAdmin(admin.ModelAdmin):
-    list_display = ('id', 'product', 'color','price', 'stock','is_deleted')
-    list_editable = ('price', 'stock','is_deleted')
+    list_display = ('id', 'product', 'color','price','discount_percentage','stock','is_deleted')
+    list_editable = ('stock','is_deleted')
     list_filter = ('product','color')
     search_fields = ('product__name','color__name')
     ordering = ('product','color')

@@ -55,7 +55,7 @@ class ProductsListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ProductListSerializer
     pagination_class = SearchPagination
-    queryset = Product.objects.filter(is_published=True, is_deleted=False)
+    queryset = Product.objects.filter(is_published=True, is_deleted=False).prefetch_related("colors__images","colors__color")
 
     filterset_class = ProductFilter
 
