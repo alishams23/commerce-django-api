@@ -65,12 +65,25 @@ class Cart(AuditableModel, SoftDeleteModel):
     )
 
     @property
-    def total_price(self,discount_price:int = 0):
+    def total_price(self):
         total_price = 0
         for item in self.items.all():
             total_price += item.total_price
-        return total_price - discount_price
-
+        return total_price 
+    
+    @property
+    def discounted_price(self):
+        item_discount = 0
+        for item in self.items.all():
+            item_discount += item.discounted_price
+            
+        if self.discount_code and self.discount_code.included_type == 'cart':
+            return self.discount_code.apply_discount(amount = item_discount)    
+        
+            
+        return item_discount
+        
+    
     def __str__(self):
         return (
             f"{self.created_by.phone_number} سبد خرید کاربر "
@@ -91,11 +104,27 @@ class CartItem(AuditableModel, SoftDeleteModel):
         verbose_name="محصول",
     )
     count = models.PositiveIntegerField(default = 1, verbose_name="تعداد")
-
+    
+    discounted =  models.PositiveIntegerField(default = 0)
+    
     @property
     def total_price(self):
         return self.count * self.product_color.price
 
+
+    @property
+    def discounted_price(self):
+        return self.count * self.product_color.discounted_price if self.discounted == 0 else self.discounted
+
+    def discount_calculate(self):
+        if self.cart.discount_code.included_type == 'product':
+            self.discounted = self.cart.discount_code.apply_discount(amount = self.discounted_price)
+            self.save()
+            return True
+
+        return False
+    
+    
     def __str__(self):
         return f"آیتم {self.cart}"
 
@@ -103,6 +132,7 @@ class CartItem(AuditableModel, SoftDeleteModel):
         verbose_name = "آیتم سبد خرید"
         verbose_name_plural = "آیتم های سبد های خرید"
         unique_together = ("cart", "product_color")
+        ordering = ("created_at",)
 
 
 class Order(AuditableModel, SoftDeleteModel):
@@ -185,6 +215,9 @@ class OrderItem(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "آیتم های سفارشات"
 
 
+def default_expired_at():
+    return timezone.now() + timedelta(days=2)
+
 class DiscountCode(AuditableModel, SoftDeleteModel):
     
     TYPE_CHOICE = (("cart","سبدخرید"),("product","محصول/محصولات"))
@@ -211,7 +244,7 @@ class DiscountCode(AuditableModel, SoftDeleteModel):
         default=0, verbose_name="تعداد دفعات استفاده شده"
     )
     expired_at = models.DateTimeField(
-        default=timezone.now() + timedelta(days=2),
+        default = default_expired_at,
         verbose_name="زمان انقضا",
         help_text="!زمان انقضا به صورت پیش فرض دو روز بعد از زمان سیستم است",
     )
@@ -236,38 +269,19 @@ class DiscountCode(AuditableModel, SoftDeleteModel):
             return False
         return True
     
+
+    def apply_discount(self,amount:float):        
+        if self.is_percentage:
+            return amount - (amount * self.amount) // 100      
+        elif amount > self.amount:      
+            return amount - self.amount
+        return 0
+
+        
     def increment_usage(self):
         self.current_usage += 1
         self.save()
 
-
-    def apply_discount(self, product:Product = None, amount:float = None):
-        """_summary_
-        args:
-            amount: For Product With diffrent Color if color price diffrent fixed_price # checkd
-        """
-    
-        if not self.code_validation():
-            return {"Error": "Discount Code is invalid! "}
-        
-        if amount is None and product is None:
-            return {"Error": "Amount Or Product Requirement!"}
-        
-        if self.included_type == 'product':
-            if not self.products.filter(id=product.id).exists():
-                return {"Error": "This Product not included this Discount Code!"}
-            
-        if amount is None and product is not None:
-            print("amount  = fixed price")
-            amount = product.fixed_price
-        
-
-        if self.is_percentage:
-            self.increment_usage()
-            return amount - amount * (self.amount / 100)
-            
-        self.increment_usage()
-        return amount - self.amount
 
     
     def __str__(self):
@@ -276,3 +290,9 @@ class DiscountCode(AuditableModel, SoftDeleteModel):
     class Meta:
         verbose_name = "کدتخفیف"
         verbose_name_plural = "کدهای تخفیف"
+
+
+# class DiscountUsedModel():
+#     user = ""
+#     disocunt = DiscountCode
+#     used_time = ""
