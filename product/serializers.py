@@ -95,7 +95,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     colors = ProductColorSerializer(many = True)
     class Meta:
         model = Product
-        fields = ["id", "name", "fixed_price","discount_percentage","discounted_price","colors"]
+        fields = ["id", "name", "fixed_price","discount_percentage","colors"]
 
 # <------------ Product Detail ---------------->
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -109,7 +109,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "name",
             "brand",
             "fixed_price",
-            "discount_percentage ",
+            "discount_percentage",
             "is_published",
             "is_favorite",
             "specifications",
