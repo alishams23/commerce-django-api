@@ -10,7 +10,7 @@ class ProductFilter(django_filters.FilterSet):
 
     max_price = django_filters.NumberFilter(field_name="fixed_price", lookup_expr="lte")
 
-    brand = NumberInFilter(field_name="brand__id")
+    brand = NumberInFilter(field_name="brand__id",lookup_expr='in')
 
     color = NumberInFilter(field_name="colors__color__id",lookup_expr = 'in')
 
