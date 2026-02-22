@@ -16,12 +16,12 @@ class AddToCartSerializer(serializers.Serializer):
         help_text="ProductColor ID of the selected product variant"
     )
     
-class RemoveFromCartSerializer(serializers.Serializer):
+# class RemoveFromCartSerializer(serializers.Serializer):
     
-    id = serializers.IntegerField(
-        help_text="CartItem ID to decrease or remove from the cart"
-    )
-    deleted = serializers.BooleanField(required = False,help_text="Force remove item from cart instead of decreasing quantity")
+#     id = serializers.IntegerField(
+#         help_text="CartItem ID to decrease or remove from the cart"
+#     )
+#     deleted = serializers.BooleanField(required = False,help_text="Force remove item from cart instead of decreasing quantity")
 
 class DeliverySerializer(serializers.ModelSerializer):
     
@@ -66,7 +66,12 @@ class CartSerializer(serializers.ModelSerializer):
         return obj.items.count()
     
 class ApplyDiscountSerializer(serializers.ModelSerializer):
-    code = serializers.CharField(required = True)
+    code = serializers.CharField(required = True,help_text = "Required and must have at least 3 characters")
     class Meta:
         model = DiscountCode
         fields = ['code']
+        
+    def validate_code(self,value):
+        if len(value) < 3:
+            raise serializers.ValidationError("Discount code must have at least 3 characters.")
+        return value

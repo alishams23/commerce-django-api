@@ -1,13 +1,14 @@
 from django.urls import path
 
-from order.views import ApplyDiscount, CartAddItem, CartRemoveItem, CartView, DeliveryView
+from order.views import DeliveryView
+from rest_framework.routers import DefaultRouter
 
+from .views import CartViewSet
 
 urlpatterns = [
-    path("list-delivery/",DeliveryView.as_view(),name = "delivery"),
-    path("cart/",CartView.as_view(),name = "cart"),
-    path("cart/add/<int:pk>/",CartAddItem.as_view(),name = "cart-add"),
-    path("cart/remove/<int:pk>/",CartRemoveItem.as_view(),name = "cart-remove"),
-    path("cart/apply-discount/<int:pk>/",ApplyDiscount.as_view(),name = "cart-apply-discount"),
-    
+    path("list-delivery/", DeliveryView.as_view(), name="delivery"),
 ]
+router = DefaultRouter()
+router.register(r"cart", CartViewSet, basename="cart")
+
+urlpatterns += router.urls
