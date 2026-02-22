@@ -33,6 +33,7 @@ class CategoryChildren(AuditableModel, SoftDeleteModel):
         null=True,
         verbose_name="کاور دسته بندی فرزند",
     )
+    show_in_menu = models.BooleanField(default = False,verbose_name = "نمایش در منو",help_text = ".با فعال کردن این گزینه دسته بندی در منوی دسته بندی صفحه اصلی سایت نمایش داده میشود")
     is_active = models.BooleanField(default=True, verbose_name="فعال/غیرفعال",db_index=True)
 
     def __str__(self):

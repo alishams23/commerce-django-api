@@ -30,7 +30,7 @@ class CategoryListView(generics.ListAPIView):
 
     def get_queryset(self):
         children_qs = CategoryChildren.objects.filter(
-            is_active=True, is_deleted=False
+            is_active=True,show_in_menu = True,is_deleted=False
         ).order_by("order", "created_at")
         return (
             Category.objects.filter(is_active=True, is_deleted=False)

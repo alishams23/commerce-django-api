@@ -5,7 +5,7 @@ from .models import Category, CategoryChildren, Brand, Color, Gallery, Product, 
 class CategoryChildrenInline(admin.TabularInline):
     model = CategoryChildren
     extra = 1
-    fields = ('name', 'order','is_active','icon')
+    fields = ('name', 'order','is_active','show_in_menu','icon')
     ordering = ('order',)
     verbose_name = "دسته بندی فرزند"
     verbose_name_plural = "دسته بندی‌های فرزند"
