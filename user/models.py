@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -5,19 +7,18 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
-
+from django.contrib.auth.hashers import make_password
 
 class User(AbstractUser,AuditableModel, SoftDeleteModel):
     phone_number = models.CharField(max_length=11, unique=True, verbose_name=_("Phone Number"))
     verify_phone_number = models.BooleanField(default=False, verbose_name=_("Phone Verified"))
-    verify_phone_code = models.CharField(max_length=6, blank=True, null=True, verbose_name=_("Verification Code"))
-    count_sms = models.IntegerField(default=0, verbose_name=_("SMS Count"))
+    birthdate = models.DateField(null=True,blank=True,verbose_name=_("Birthdate"))
     profile_image = models.ImageField(blank=True, null=True, upload_to="user/image_profile/", verbose_name=_("Profile Image"))
     province = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Province"))
     city = models.CharField(max_length=30, blank=True, null=True, verbose_name=_("City"))
     address = models.TextField(blank=True, null=True, verbose_name=_("Address"))
     zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name=_("ZIP Code"))
-    receiver_phone_number = models.CharField(max_length=11, unique=True, verbose_name=_("Receiver Phone Number"))
+    receiver_phone_number = models.CharField(max_length=11,verbose_name=_("Receiver Phone Number"))
 
     def __str__(self):
         return f"کاربر {self.username} --- {self.first_name} {self.last_name}"
@@ -27,11 +28,11 @@ class User(AbstractUser,AuditableModel, SoftDeleteModel):
         verbose_name_plural = _("Users")
 
 
-class SignUpVerifyCode(AuditableModel, SoftDeleteModel):
-    phone_number = models.CharField(max_length=11, unique=True, verbose_name=_("Phone Number"))
-    verify_phone_number = models.BooleanField(default=False, verbose_name=_("Phone Verified"))
-    verify_phone_code = models.CharField(max_length=6, blank=True, null=True, verbose_name=_("Verification Code"))
-    count_sms = models.IntegerField(default=0, verbose_name=_("SMS Count"))
+class RegistrationSession(AuditableModel, SoftDeleteModel):
+    phone_number = models.CharField(max_length=11,unique = True,verbose_name=_("Phone Number"))
+    password_hash = models.CharField(verbose_name = _("password"), max_length=128)
+    birthdate = models.DateField(null=True,blank=True,verbose_name=_("Birthdate"))
+    email = models.EmailField(verbose_name = _("email address"), blank=True)
 
     def __str__(self):
         return f"تایید ثبت نام {self.phone_number}"
@@ -39,6 +40,42 @@ class SignUpVerifyCode(AuditableModel, SoftDeleteModel):
     class Meta:
         verbose_name = _("Sign Up Verification")
         verbose_name_plural = _("Sign Up Verification Queue")
+
+class OTPCodeModel(AuditableModel, SoftDeleteModel):
+    PURPOSE_CHOICE = (("register","ثبت نام"),("reset_password","بازیابی رمز عبور"))
+
+    phone_number = models.CharField(max_length=11, verbose_name=_("Phone Number"))
+
+    purpose = models.CharField(max_length=20,choices=PURPOSE_CHOICE,default = 'register')
+
+    code_hash = models.CharField(max_length=128)
+
+    attempts = models.PositiveSmallIntegerField(default=0)
+
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+
+    is_used = models.BooleanField(default=False)
+
+
+    def otp_validation(self):
+        
+        if not self.last_sent_at:
+            return False
+        
+        if (self.is_used or self.attempts >= 5) or timezone.now() > self.last_sent_at + timedelta(minutes = 3):
+            return False
+        return True
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["phone_number", "purpose","is_used"])
+        ]
+        constraints = [
+            models.UniqueConstraint(fields = ['phone_number','purpose'],name = 'unique_phone_purpose')
+        ]
+        verbose_name = _("OTP Code")
+        verbose_name_plural = _("OTP Codes")
+        ordering = ("-last_sent_at",)
 
 
 class ContactUs(AuditableModel, SoftDeleteModel):

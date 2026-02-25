@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import User, SignUpVerifyCode, ContactUs, Notification, NotificationRead
+from .models import User, RegistrationSession, ContactUs, Notification, NotificationRead
 
 from django.contrib.auth.admin import UserAdmin
 
@@ -11,17 +11,16 @@ from django.contrib.auth.admin import UserAdmin
 class CustomUserAdmin(UserAdmin):
     list_display = (
         "username", "first_name", "last_name", "phone_number",
-        "verify_phone_number", "count_sms", "province", "city"
+        "verify_phone_number","province", "city"
     )
     search_fields = ("username", "first_name", "last_name", "phone_number")
     list_filter = ("verify_phone_number", "province", "city", "is_staff", "is_superuser")
-    readonly_fields = ("count_sms",)
     fieldsets = (
         (_("اطلاعات کاربری"), {
-            "fields": ("username", "first_name", "last_name", "email", "password")
+            "fields": ("username", "first_name", "last_name", "email", "password","birthdate")
         }),
         (_("اطلاعات تماس"), {
-            "fields": ("phone_number", "verify_phone_number", "verify_phone_code", "receiver_phone_number")
+            "fields": ("phone_number", "verify_phone_number", "receiver_phone_number")
         }),
         (_("آدرس"), {
             "fields": ("province", "city", "address", "zip_code")
@@ -36,14 +35,13 @@ class CustomUserAdmin(UserAdmin):
 
 
 # ============================
-# SignUpVerifyCode Admin
+# RegistrationSession Admin
 # ============================
-@admin.register(SignUpVerifyCode)
-class SignUpVerifyCodeAdmin(admin.ModelAdmin):
-    list_display = ("phone_number", "verify_phone_number", "count_sms", "created_at", "updated_at")
-    search_fields = ("phone_number",)
-    list_filter = ("verify_phone_number", "created_at")
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+@admin.register(RegistrationSession)
+class RegistrationSessionAdmin(admin.ModelAdmin):
+    list_display = ("phone_number","email","created_at", "updated_at")
+    search_fields = ("phone_number","email")
+    readonly_fields = ("phone_number","password_hash","birthdate","email",'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 
 # ============================
