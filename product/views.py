@@ -123,12 +123,12 @@ class ProductsByCategoryView(ProductsListView):
 class ProductDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = ProductDetailSerializer
+    lookup_field = "slug"
     queryset = (
         Product.objects.filter(is_published=True, is_deleted=False)
         .prefetch_related("colors", "colors__images", "comments")
         .select_related("brand")
     )
-    lookup_field = "id"
 
 
 @extend_schema(

@@ -50,6 +50,7 @@ class BrandAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite', 'created_at', 'updated_at','is_deleted')
+    prepopulated_fields = {"slug":("name",)}
     list_editable = ('is_published', 'is_favorite','is_deleted')
     list_filter = ('category', 'brand', 'is_published', 'is_favorite')
     search_fields = ('name', 'category__name', 'brand__name')

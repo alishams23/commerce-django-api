@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from .views import BrandListView, CategoryListView, ColorListView, GalleryView, ProductsByCategoryView, ProductDetailView, ProductsListView
 
 urlpatterns = [
@@ -11,5 +11,5 @@ urlpatterns = [
     path('gallery/',GalleryView.as_view(),name = "products-list"),
     
     # ------------------- Detail -------------------
-    path('product-detail/<int:id>/',ProductDetailView.as_view(),name = "product-detail"),
+    re_path(r'^detail/(?P<slug>[^/]+)/$',ProductDetailView.as_view(),name = "product-detail"),
 ]

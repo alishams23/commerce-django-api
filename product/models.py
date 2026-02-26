@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from colorfield.fields import ColorField
@@ -65,6 +66,7 @@ class Product(AuditableModel, SoftDeleteModel):
         verbose_name="دسته بندی محصول",db_index=True
     )
     name = models.CharField(max_length=100, verbose_name="نام محصول")
+    slug = models.SlugField(max_length=255, unique=True,allow_unicode=True,blank = True,verbose_name='اسلاگ محصول')
     brand = models.ForeignKey(
         Brand,
         on_delete=models.PROTECT,
@@ -93,6 +95,20 @@ class Product(AuditableModel, SoftDeleteModel):
 
     def __str__(self):
         return f"{self.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name, allow_unicode=True)
+            slug = base_slug
+
+            counter = 1
+            while Product.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
 
 
     class Meta:
