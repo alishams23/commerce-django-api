@@ -10,6 +10,8 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from user.models import User
+
 from .utils import generate_discount_code
 
 
@@ -40,7 +42,13 @@ class Cart(AuditableModel, SoftDeleteModel):
         ("pay", "پرداخت شده"),
         ("pay_error", "خطا در حین پرداخت"),
     )
-    # user/author = created_by
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,#Rewrote for this
+        null=True,
+        blank=True,
+        related_name="created_%(class)s_set"
+    )
     discount_code = models.ForeignKey(
         "DiscountCode",
         on_delete=models.SET_NULL,

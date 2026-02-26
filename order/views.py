@@ -50,30 +50,29 @@ class CartViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["GET"])
     def view(self, request):
-        context = {"result": "Success"}
+        context = {"status": "Success"}
         cart = self.get_object()
 
         for item in cart.items.select_related("product_color"):
             current_stock = item.product_color.stock
+            
+            if current_stock == 0 or item.count > current_stock :
+                context.setdefault("warnings", []).append({
+                    "message": f"The item '{item.product_color}' is currently out of stock.",
+                    "item_id": item.id,
+                    "current_stock":current_stock
+                })
 
-            if current_stock == 0:
-                context.setdefault("warnings", []).append(
-                    {"reason": "OUT_OF_STOCK", "item_id": item.id}
-                )  # .{item.product_color.product.name}
-                item.delete_hard()
-
-            elif item.count > current_stock:
-                item.count = current_stock
-                item.save()
-                context.setdefault("warnings", []).append(
-                    {"reason": "QUANTITY_ADJUSTED", "item_id": item.id}
-                )  # .{item.product_color.product.name}
+            # elif item.count > current_stock:
+            #     context.setdefault("warnings", []).append(
+            #         {"reason": "QUANTITY_ADJUSTED", "item_id": item.id}
+            #     )  # .{item.product_color.product.name}
 
         if cart.discount_code is not None and not cart.discount_code.code_validation():
             cart.discount_code = None
             cart.save()
             context.setdefault("warnings", []).append(
-                {"reason": "DISCOUNTED_CODE_EXPIRED"}
+                {"message": "Discount Code Expired."}
             )
 
         cart.items.update(discounted=0)

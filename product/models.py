@@ -92,7 +92,7 @@ class Product(AuditableModel, SoftDeleteModel):
     is_favorite = models.BooleanField(default=False, verbose_name="وضعیت محبوبیت")
 
     def __str__(self):
-        return f"محصول {self.id} - {self.name}"
+        return f"{self.name}"
 
 
     class Meta:
