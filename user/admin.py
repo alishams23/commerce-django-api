@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import User, RegistrationSession, ContactUs, Notification, NotificationRead
+from .models import OTPCodeModel, User, RegistrationSession, ContactUs, Notification, NotificationRead
 
 from django.contrib.auth.admin import UserAdmin
 
@@ -138,3 +138,8 @@ class NotificationReadAdmin(admin.ModelAdmin):
         return obj.is_read
     is_read.boolean = True
     is_read.short_description = _("خوانده شده")
+
+@admin.register(OTPCodeModel)
+class OTPCodeModelAdmin(admin.ModelAdmin):
+    list_display = ("phone_number","purpose","last_sent_at","is_used")
+    list_filter = ("phone_number","purpose","is_used")
