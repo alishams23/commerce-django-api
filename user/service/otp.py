@@ -1,9 +1,8 @@
+from datetime import timedelta
 import secrets
 import string
-from datetime import timedelta
 
 from django.utils import timezone
-from django.contrib.auth.hashers import check_password, make_password
 from user.models import OTPCodeModel
 
 
@@ -28,7 +27,7 @@ class OTPService:
             phone_number=self.phone_number,
             purpose=self.purpose,
             defaults={
-                "code_hash": make_password(code),
+                "code_hash": code,
                 "attempts": 0,
                 "is_used": False,
                 "last_sent_at": timezone.now(),
@@ -48,9 +47,7 @@ class OTPService:
         if not otp.otp_validation():
             return False, "OTP expired or too many attempts"
 
-        if not check_password(
-            code, otp.code_hash
-        ):  # Check_Password function for check hash code
+        if code != otp.code_hash: 
             otp.attempts += 1
             otp.save(update_fields=["attempts"])
 
