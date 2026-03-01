@@ -10,7 +10,9 @@ from user.models import ContactUs,User
 from user.serializers import (
     ContactUsSerializer,
     LoginSerializer,
+    PhoneNumberSerializer,
     RegistrationSerializer,
+    ResetPasswordSerializer,
     VerifyOTPCodeSerializer,
 )
 from dj_rest_auth.views import LoginView as login_rest
@@ -276,6 +278,64 @@ class RegisterViewSet(viewsets.ViewSet):
         }
         return Response(context, status=status.HTTP_200_OK)
 
+
+class ResetPasswordViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+    def create(self,request):
+        serializer = PhoneNumberSerializer(data = self.request.data)
+        serializer.is_valid(raise_exception = True)
+        phone_number = serializer.validated_data['phone_number']
+        
+        if not User.objects.filter(phone_number = phone_number,verify_phone_number = True).exists():
+            return Response(
+                {"status": "error", "message": "User Not Register Or No verify_phone_number "},
+                status=status.HTTP_400_BAD_REQUEST,)
+        
+        otp_service = OTPService(serializer.validated_data['phone_number'],"reset_password")
+
+        success,message = otp_service.generate_code()
+        
+        if success is False:
+            return Response(
+                {"status": "error", "message": message},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        print(message)  # Send Code
+
+        return Response({"status": "success", "message": "OTP Send Success"})
+    
+    @action(detail=False, methods=["POST"], url_path="verify")
+    def verify(self, request):
+
+        serializer = ResetPasswordSerializer(data=self.request.data)
+
+        serializer.is_valid(raise_exception=True)
+
+        phone_number = serializer.validated_data["phone_number"]
+
+        OTP_service = OTPService(phone_number, "reset_password")
+
+        success, message = OTP_service.verify_code(
+            serializer.validated_data["otp_code"]
+        )
+
+        if success is False:
+            return Response(
+                {"status": "error", "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        user = User.objects.get(phone_number = phone_number)
+        user.set_password(serializer.validated_data["password"])
+        user.save()
+        
+        return Response({"status": "success", "message": "Password has been reset successfully."})
+            
+
+
+class Dashboard(viewsets.ViewSet):
+    pass
 
 class ContactUsView(generics.CreateAPIView):
     permission_classes = [AllowAny]

@@ -62,8 +62,9 @@ class OTPCodeModel(AuditableModel, SoftDeleteModel):
         if not self.last_sent_at:
             return False
         
-        if (self.is_used or self.attempts >= 5) or timezone.now() > self.last_sent_at + timedelta(minutes = 3):
+        if self.is_used or self.attempts >= 5 or (timezone.now() > (self.last_sent_at + timedelta(minutes = 3))):
             return False
+        
         return True
 
     class Meta:
