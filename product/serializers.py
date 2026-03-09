@@ -11,6 +11,7 @@ from product.models import (
     ProductImage,
 )
 from user.serializers import UserCommentsSerializer
+from django.db.models import Sum
 
 # <------------ Brand and Color List ---------------->
 
@@ -96,6 +97,16 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ["id", "name","slug","fixed_price","discount_percentage","colors"]
+        
+class ProductListInterestsSerializer(serializers.ModelSerializer):
+    stock = serializers.SerializerMethodField()
+    class Meta:
+        model = Product
+        fields = ["id", "name","slug","fixed_price","discount_percentage","stock"]
+        
+    def get_stock(self,obj):
+        aggregate = obj.colors.aggregate(total_stock = Sum('stock'))
+        return aggregate['total_stock'] or 0
 
 # <------------ Product Detail ---------------->
 class ProductDetailSerializer(serializers.ModelSerializer):

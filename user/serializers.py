@@ -91,3 +91,49 @@ class ContactUsSerializer(serializers.ModelSerializer):
         if not re.match(r'^09[0-9]{9}$', value):
             raise serializers.ValidationError("Phone Number started '09' and must 11 character")
         return value
+    
+class IdentitySerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['profile_image','username']
+    
+class DashboardSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(read_only = True)
+    email = serializers.EmailField(
+        required=False,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    date_joined = serializers.DateTimeField(read_only = True)
+    
+    class Meta:
+        model = User
+        fields = ['get_full_name','phone_number','email','date_joined','birthdate','province',
+                  'city','address','zip_code','receiver_phone_number']
+    
+    def validate_zip_code(self, value):
+        if not re.match(r'^\d{10}$', value):
+            raise serializers.ValidationError("Zip Code must 10 character")
+        return value
+    
+    def validate_receiver_phone_number(self,value):
+        if not re.match(r'^09[0-9]{9}$',value):
+            raise serializers.ValidationError("Receiver Phone Number Started '09' and must 11 character")
+        return value
+    
+class PersonalInfoSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(read_only = True)
+    email = serializers.EmailField(
+        required=False,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    password = serializers.CharField(required = False,max_length=128,write_only = True)
+    class Meta:
+        model = User
+        fields = ['profile_image','get_full_name','username','phone_number','email','province',
+                  'city','address','zip_code','password']
+        
+    def validate_zip_code(self, value):
+        if not re.match(r'^\d{10}$', value):
+            raise serializers.ValidationError("Zip Code must 10 character")
+        return value

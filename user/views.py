@@ -6,10 +6,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
+from product.serializers import ProductListInterestsSerializer
 from user.models import ContactUs,User
 from user.serializers import (
     ContactUsSerializer,
+    DashboardSerializer,
+    IdentitySerializer,
     LoginSerializer,
+    PersonalInfoSerializer,
     PhoneNumberSerializer,
     RegistrationSerializer,
     ResetPasswordSerializer,
@@ -76,9 +80,7 @@ class LoginView(login_rest):
 
         user = get_object_or_404(
             User,
-            phone_number=serializer.validated_data["phone_number"],
-            verify_phone_number=True,
-        )
+            phone_number=serializer.validated_data["phone_number"],)
 
         if not authenticate(
             request,
@@ -261,6 +263,7 @@ class RegisterViewSet(viewsets.ViewSet):
             password=register_info.password_hash,
             birthdate=register_info.birthdate,
             email=register_info.email,
+            receiver_phone_number = register_info.phone_number,
             verify_phone_number=True,
         )
         register_info.delete_hard()
@@ -286,9 +289,9 @@ class ResetPasswordViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception = True)
         phone_number = serializer.validated_data['phone_number']
         
-        if not User.objects.filter(phone_number = phone_number,verify_phone_number = True).exists():
+        if not User.objects.filter(phone_number = phone_number).exists():
             return Response(
-                {"status": "error", "message": "User Not Register Or No verify_phone_number "},
+                {"status": "error", "message": "User Not Register"},
                 status=status.HTTP_400_BAD_REQUEST,)
         
         otp_service = OTPService(serializer.validated_data['phone_number'],"reset_password")
@@ -334,9 +337,40 @@ class ResetPasswordViewSet(viewsets.ViewSet):
             
 
 
-class Dashboard(viewsets.ViewSet):
-    pass
+class ProfileViewSet(viewsets.ViewSet):
+    
+    @action(detail = False,methods = ["GET"])
+    def identity(self,request):
+        return Response(IdentitySerializer(instance = self.request.user,context = {'request': request}).data)
+    
+    @action(detail = False,methods = ["GET","PATCH"])
+    def dashboard(self,request):
+        if self.request.method == 'GET':
+            return Response(DashboardSerializer(instance = self.request.user).data)
 
+        serializer = DashboardSerializer(data = self.request.data,instance = self.request.user) 
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response(serializer.data)
+    
+    @action(detail = False,methods = ["GET","PATCH"],url_path = 'personal-info')
+    def personal_info(self,request):
+
+        if self.request.method == 'GET':
+            return Response(PersonalInfoSerializer(instance = self.request.user,context = {'request': request}).data)
+        
+        serializer = PersonalInfoSerializer(data = self.request.data,instance = self.request.user,context = {'request': request}) 
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response(serializer.data)
+    
+    @action(detail = False,methods = ["GET"])
+    def interests(self,request):
+        return Response(ProductListInterestsSerializer(self.request.user.interests,many = True).data)
+    
+    
+    
+    
 class ContactUsView(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ContactUsSerializer

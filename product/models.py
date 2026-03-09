@@ -159,6 +159,13 @@ class ProductColor(AuditableModel, SoftDeleteModel):
     
     def __str__(self):
         return f"{self.product} - {self.color}"
+    
+    def save(self,*args,**kwargs):
+        product = self.product
+        if product.fixed_price == 0 or product.fixed_price > self.price:
+            product.fixed_price = self.price
+            product.save()
+        super().save(*args,**kwargs)
 
 
     class Meta:

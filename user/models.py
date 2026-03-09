@@ -9,6 +9,8 @@ from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from django.contrib.auth.hashers import make_password
 
+from product.models import Product
+
 class User(AbstractUser,AuditableModel, SoftDeleteModel):
     phone_number = models.CharField(max_length=11, unique=True, verbose_name=_("Phone Number"))
     verify_phone_number = models.BooleanField(default=False, verbose_name=_("Phone Verified"))
@@ -19,6 +21,7 @@ class User(AbstractUser,AuditableModel, SoftDeleteModel):
     address = models.TextField(blank=True, null=True, verbose_name=_("Address"))
     zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name=_("ZIP Code"))
     receiver_phone_number = models.CharField(max_length=11,verbose_name=_("Receiver Phone Number"))
+    interests = models.ManyToManyField(Product,blank = True,related_name = 'interested_users',verbose_name=_("Interests"))
 
     def __str__(self):
         return f"کاربر {self.username} --- {self.first_name} {self.last_name}"
