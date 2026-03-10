@@ -1,6 +1,6 @@
 from django.urls import path
 
-from user.views import ContactUsView, ProfileViewSet, LoginView, LogoutView,RegisterViewSet, ResetPasswordViewSet
+from user.views import ContactUsView, InterestsViewSet, ProfileViewSet, LoginView, LogoutView,RegisterViewSet, ResetPasswordViewSet
 
 from django.urls import re_path
 
@@ -20,5 +20,6 @@ router = DefaultRouter()
 router.register("register",RegisterViewSet,basename = 'register')
 router.register("password/reset",ResetPasswordViewSet,basename = 'password_reset')
 router.register("profile",ProfileViewSet,basename = 'profile')
+router.register("interest",InterestsViewSet,basename = 'interest')
 
 urlpatterns += router.urls

@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
+from product.models import Product
 from product.serializers import ProductListInterestsSerializer
 from user.models import ContactUs,User
 from user.serializers import (
@@ -368,7 +369,19 @@ class ProfileViewSet(viewsets.ViewSet):
     def interests(self,request):
         return Response(ProductListInterestsSerializer(self.request.user.interests,many = True).data)
     
+
+class InterestsViewSet(viewsets.ViewSet):
+    lookup_field = 'id'
+    @action(detail = True,methods = ["POST"])
+    def add(self,request,id):
+        self.request.user.interests.add(get_object_or_404(Product,id = id))
+        return Response({"status":"Success","Message":"Product Add To Interests."})
     
+    @action(detail = True,methods = ["Delete"])
+    def remove(self,request,id):
+        self.request.user.interests.remove(get_object_or_404(Product,id = id))
+        return Response({"status":"Success","Message":"Product Removed To Interests."})
+
     
     
 class ContactUsView(generics.CreateAPIView):
