@@ -98,6 +98,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = ["id", "name","slug","fixed_price","discount_percentage","colors"]
         
+# <------------ Product List Interests ---------------->
 class ProductListInterestsSerializer(serializers.ModelSerializer):
     stock = serializers.SerializerMethodField()
     class Meta:

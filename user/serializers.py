@@ -1,6 +1,7 @@
 import re
 from rest_framework import serializers
-from user.models import ContactUs, User
+from order.models import DiscountCode
+from user.models import ContactUs, Notification, User
 from rest_framework.validators import UniqueValidator
 
 class PhoneNumberSerializer(serializers.Serializer):
@@ -137,3 +138,14 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
         if not re.match(r'^\d{10}$', value):
             raise serializers.ValidationError("Zip Code must 10 character")
         return value
+
+class DiscountCodeNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiscountCode
+        fields = ['id','code','amount','is_percentage','expired_at']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    discount_code = DiscountCodeNotificationSerializer()    
+    class Meta:
+        model = Notification
+        fields = ['id','title','text','subject','discount_code']

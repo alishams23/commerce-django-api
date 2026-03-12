@@ -6,14 +6,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from product.models import Product
 from product.serializers import ProductListInterestsSerializer
-from user.models import ContactUs,User
+from user.models import ContactUs, Notification, NotificationRead,User
 from user.serializers import (
     ContactUsSerializer,
     DashboardSerializer,
     IdentitySerializer,
     LoginSerializer,
+    NotificationSerializer,
     PersonalInfoSerializer,
     PhoneNumberSerializer,
     RegistrationSerializer,
@@ -368,6 +370,13 @@ class ProfileViewSet(viewsets.ViewSet):
     @action(detail = False,methods = ["GET"])
     def interests(self,request):
         return Response(ProductListInterestsSerializer(self.request.user.interests,many = True).data)
+    
+    @action(detail = False,methods = ["GET"])
+    def notifications(self,request):
+        notifications = Notification.objects.filter(is_published = True).select_related("discount_code")
+        for notification in notifications.exclude(user_statuses__user = self.request.user):
+            NotificationRead.objects.create(user = self.request.user,notification = notification,read_at = timezone.now())
+        return Response(NotificationSerializer(notifications,many = True).data)
     
 
 class InterestsViewSet(viewsets.ViewSet):

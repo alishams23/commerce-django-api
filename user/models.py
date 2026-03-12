@@ -7,8 +7,8 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
-from django.contrib.auth.hashers import make_password
 
+# from order.models import DiscountCode
 from product.models import Product
 
 class User(AbstractUser,AuditableModel, SoftDeleteModel):
@@ -99,9 +99,11 @@ class ContactUs(AuditableModel, SoftDeleteModel):
 
 
 class Notification(AuditableModel, SoftDeleteModel):
+    STATUS_CHOICE = (("discount_code","کدتخفیف"),)
+    subject = models.CharField(choices = STATUS_CHOICE,max_length = 30,blank = True,null = True,verbose_name = "موضوع اعلان")
     title = models.CharField(max_length=75, verbose_name=_("Title"))
     text = models.TextField(verbose_name=_("Text"))
-    users = models.ManyToManyField(User, through="NotificationRead",through_fields=("notification", "user"),related_name="notifications", verbose_name=_("Users"))
+    discount_code = models.ForeignKey("order.DiscountCode",on_delete = models.SET_NULL,null = True,blank = True,verbose_name = "کد تخفیف",related_name = "+")
     is_published = models.BooleanField(default=False, verbose_name=_("Published"))
     published_at = models.DateTimeField(blank=True, null=True, verbose_name=_("Published At"))
 

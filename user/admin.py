@@ -69,8 +69,8 @@ class ContactUsAdmin(admin.ModelAdmin):
 class NotificationReadInline(admin.TabularInline):
     model = NotificationRead
     extra = 1
-    readonly_fields = ('is_read',"read_at",'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
-    fields = ("user", "is_read", "read_at", "created_at", "updated_at")
+    readonly_fields = ("user",'is_read',"read_at",'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    fields = ("user", "is_read", "read_at")
     can_delete = True
 
     def is_read(self, obj):
@@ -84,11 +84,12 @@ class NotificationReadInline(admin.TabularInline):
 # ============================
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ("title", "is_published", "published_at", "created_at")
+    list_display = ("title", "is_published", "published_at","subject","created_at")
     search_fields = ("title", "text")
-    list_filter = ("is_published", "published_at", "created_at")
+    list_filter = ("is_published", "published_at","subject","created_at")
     readonly_fields = ('published_at','created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     fieldsets = (
+        (_("موضوع"), {"fields": ("subject","discount_code")}),
         (_("محتوا"), {"fields": ("title", "text")}),
         (_("وضعیت انتشار"), {"fields": ("is_published", "published_at")}),
         (_("تاریخ‌ها"), {"fields": ("created_at", "updated_at")}),

@@ -8,7 +8,7 @@ urlpatterns = [
     path('categories-list/',CategoryListView.as_view(),name = "categories-list"),
     path('categories/<int:id>/products/',ProductsByCategoryView.as_view(),name = "category-products-list"),
     path('list/',ProductsListView.as_view(),name = "products-list"),
-    path('gallery/',GalleryView.as_view(),name = "products-list"),
+    path('gallery/',GalleryView.as_view(),name = "gallery"),
     
     # ------------------- Detail -------------------
     re_path(r'^detail/(?P<slug>[^/]+)/$',ProductDetailView.as_view(),name = "product-detail"),
