@@ -1,6 +1,7 @@
 import re
 from rest_framework import serializers
 from order.models import DiscountCode
+from product.models import Product, ProductComment, ProductImage
 from user.models import ContactUs, Notification, User
 from rest_framework.validators import UniqueValidator
 
@@ -139,13 +140,31 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Zip Code must 10 character")
         return value
 
-class DiscountCodeNotificationSerializer(serializers.ModelSerializer):
+class DiscountCodeUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiscountCode
         fields = ['id','code','amount','is_percentage','expired_at']
 
 class NotificationSerializer(serializers.ModelSerializer):
-    discount_code = DiscountCodeNotificationSerializer()    
+    discount_code = DiscountCodeUserSerializer()    
     class Meta:
         model = Notification
         fields = ['id','title','text','subject','discount_code']
+
+class ProductUserSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    class Meta:
+        model = Product
+        fields = ['id','name','slug','image']
+
+    def get_image(self,obj):
+        product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True,order = 0).first()
+        if not product_image:
+            return None
+        return self.context.get("request").build_absolute_uri(product_image.image.url)
+    
+class ProductCommentUserSerializer(serializers.ModelSerializer):
+    product = ProductUserSerializer()
+    class Meta:
+        model = ProductComment
+        fields = ['product','text','created_at','is_approved']

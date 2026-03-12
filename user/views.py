@@ -18,6 +18,7 @@ from user.serializers import (
     NotificationSerializer,
     PersonalInfoSerializer,
     PhoneNumberSerializer,
+    ProductCommentUserSerializer,
     RegistrationSerializer,
     ResetPasswordSerializer,
     VerifyOTPCodeSerializer,
@@ -377,6 +378,10 @@ class ProfileViewSet(viewsets.ViewSet):
         for notification in notifications.exclude(user_statuses__user = self.request.user):
             NotificationRead.objects.create(user = self.request.user,notification = notification,read_at = timezone.now())
         return Response(NotificationSerializer(notifications,many = True).data)
+
+    @action(detail = False,methods = ["GET"])
+    def comments(self,request):
+        return Response(ProductCommentUserSerializer(self.request.user.created_productcomment_set.all().select_related("product"),many = True,context = {'request': request}).data)
     
 
 class InterestsViewSet(viewsets.ViewSet):
