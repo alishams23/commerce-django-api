@@ -10,13 +10,23 @@ class CategoryChildrenInline(admin.TabularInline):
     verbose_name = "دسته بندی فرزند"
     verbose_name_plural = "دسته بندی‌های فرزند"
 
-# class ProductColorInline(admin.TabularInline):
-#     model = ProductColor
-#     extra = 1
-#     fields = ('name', 'code', 'price', 'stock')
-#     ordering = ('name',)
-#     verbose_name = "رنگ محصول"
-#     verbose_name_plural = "رنگ بندی محصولات"
+class ProductColorImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1
+    fields = ('image', 'order', 'is_cover')
+    ordering = ('-created_at',)
+    verbose_name = "عکس محصول"
+    verbose_name_plural = "عکس های این رنگ از محصول"
+    
+class ProductColorInline(admin.TabularInline):
+    model = ProductColor
+    extra = 1
+    fields = ('product', 'color', 'base_price', 'base_discount','stock')
+    ordering = ('-created_at',)
+    autocomplete_fields = ['color']
+    verbose_name = "رنگ محصول"
+    verbose_name_plural = "رنگ بندی محصولات"
+    
 
 # ------------------- Category -------------------
 @admin.register(Category)
@@ -55,8 +65,9 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'brand', 'is_published', 'is_favorite')
     search_fields = ('name', 'category__name', 'brand__name')
     ordering = ('category', 'name')
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
-    # inlines = [ProductColorInline]
+    # readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    inlines = [ProductColorInline]
+    exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'is_deleted')
 
 
 # ------------------- Color -------------------
@@ -77,8 +88,11 @@ class ProductColorAdmin(admin.ModelAdmin):
     list_filter = ('product','color')
     search_fields = ('product__name','color__name')
     ordering = ('product','color')
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    # readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'is_deleted')
 
+    autocomplete_fields = ['product','color']
+    inlines = [ProductColorImageInline]
 # ------------------- ProductImage -------------------
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
@@ -97,7 +111,7 @@ class ProductCommentAdmin(admin.ModelAdmin):
     list_filter = ('product', 'created_by', 'is_approved')
     search_fields = ('user__username', 'product__name', 'text')
     ordering = ('-created_at',)
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'updated_by')
 
 
 # ------------------- Gallery -------------------
