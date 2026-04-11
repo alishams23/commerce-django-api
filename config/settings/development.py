@@ -21,12 +21,6 @@ ALLOWED_HOSTS = ['*']
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(base.BASE_DIR, 'static/')
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(base.BASE_DIR, 'media/') 
-
 
 
 SIMPLE_JWT = {
