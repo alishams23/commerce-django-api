@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from order.models import Cart, CartItem, Delivery, DiscountCode
 from product.models import Color, Product, ProductColor
+from user.models import User
 
 
 class DiscountCodeOrderSerializer(serializers.ModelSerializer):
@@ -75,3 +76,14 @@ class ApplyDiscountSerializer(serializers.ModelSerializer):
         if len(value) < 3:
             raise serializers.ValidationError("Discount code must have at least 3 characters.")
         return value
+
+class DetailPaySerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['first_name','last_name','province','city','address','zip_code','phone_number','email']
+        extra_kwargs = {
+            'first_name': {'read_only': True},
+            'last_name': {'read_only': True},
+            'phone_number': {'read_only': True},
+        }
