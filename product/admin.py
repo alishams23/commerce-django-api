@@ -112,6 +112,9 @@ class ProductCommentAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'product__name', 'text')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'updated_by')
+    
+    def get_queryset(self, request):
+        return ProductComment.all_objects.all()
 
 
 # ------------------- Gallery -------------------
