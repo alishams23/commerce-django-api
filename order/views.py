@@ -102,7 +102,7 @@ class CartViewSet(viewsets.ViewSet):
                 cart.discount_code = None
                 cart.save()
 
-        context["cart_detail"] = CartSerializer(instance=cart).data
+        context["cart_detail"] = CartSerializer(instance=cart,context = {'request': request}).data
 
         return Response(
             context,

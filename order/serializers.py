@@ -45,10 +45,20 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductColorCartSerializer(serializers.ModelSerializer):
     product = ProductSerializer() 
     color = ColorOrderSerializer()
+    image = serializers.SerializerMethodField()
     class Meta:
         model = ProductColor
-        fields = ['id','product','color','price','discounted_price']
+        fields = ['id','product','color','price','discounted_price','image']
 
+    def get_image(self,obj):
+        
+        images = obj.images.all()
+        if not images:
+            return None
+        
+        cover = images.filter(is_cover = True,order = 0).first()
+        return self.context.get("request").build_absolute_uri(cover.image.url if cover else images.first().image.url)
+    
 class CartItemSerializer(serializers.ModelSerializer):
     product_color = ProductColorCartSerializer()
     class Meta:
