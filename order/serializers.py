@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from order.models import Cart, CartItem, Delivery, DiscountCode
 from product.models import Color, Product, ProductColor
+from user.models import User
 
 
 class DiscountCodeOrderSerializer(serializers.ModelSerializer):
@@ -44,10 +45,20 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductColorCartSerializer(serializers.ModelSerializer):
     product = ProductSerializer() 
     color = ColorOrderSerializer()
+    image = serializers.SerializerMethodField()
     class Meta:
         model = ProductColor
-        fields = ['id','product','color','price','discounted_price']
+        fields = ['id','product','color','price','discounted_price','image']
 
+    def get_image(self,obj):
+        
+        images = obj.images.all()
+        if not images:
+            return None
+        
+        cover = images.filter(is_cover = True,order = 0).first()
+        return self.context.get("request").build_absolute_uri(cover.image.url if cover else images.first().image.url)
+    
 class CartItemSerializer(serializers.ModelSerializer):
     product_color = ProductColorCartSerializer()
     class Meta:
@@ -75,3 +86,14 @@ class ApplyDiscountSerializer(serializers.ModelSerializer):
         if len(value) < 3:
             raise serializers.ValidationError("Discount code must have at least 3 characters.")
         return value
+
+class DetailPaySerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['first_name','last_name','province','city','address','zip_code','phone_number','email']
+        extra_kwargs = {
+            'first_name': {'read_only': True},
+            'last_name': {'read_only': True},
+            'phone_number': {'read_only': True},
+        }

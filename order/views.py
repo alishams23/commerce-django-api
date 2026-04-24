@@ -1,4 +1,4 @@
-from rest_framework import generics, status, viewsets
+from rest_framework import generics, status, viewsets,views
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -9,6 +9,7 @@ from order.serializers import (
     ApplyDiscountSerializer,
     CartSerializer,
     DeliverySerializer,
+    DetailPaySerializer,
 )
 
 from product.models import ProductColor
@@ -101,7 +102,7 @@ class CartViewSet(viewsets.ViewSet):
                 cart.discount_code = None
                 cart.save()
 
-        context["cart_detail"] = CartSerializer(instance=cart).data
+        context["cart_detail"] = CartSerializer(instance=cart,context = {'request': request}).data
 
         return Response(
             context,
@@ -290,3 +291,7 @@ class CartViewSet(viewsets.ViewSet):
             cart.discount_code = None
             cart.save()
         return Response({"result": "Discount Code UnApply Successfully"})
+    
+class DetailPayView(views.APIView):
+    def get(self,request,*args,**kwargs):
+        return Response(DetailPaySerializer(instance = self.request.user).data)

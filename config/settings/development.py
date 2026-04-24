@@ -31,6 +31,25 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Token",),                
 }
 
+AZ_IRANIAN_BANK_GATEWAYS = {
+    "GATEWAYS": {
+        "ZARINPAL": {
+            "MERCHANT_CODE": os.environ.get("ZARINPAL_MERCHANT_CODE", ""),
+            "SANDBOX": 1,  # 0 disable, 1 active
+        },
+    },
+    "IS_SAMPLE_FORM_ENABLE": True,  # اختیاری و پیش فرض غیر فعال است
+    "DEFAULT": "ZARINPAL",
+    "CURRENCY": "IRT",  # اختیاری
+    "TRACKING_CODE_QUERY_PARAM": "tc",  # اختیاری
+    "TRACKING_CODE_LENGTH": 16,  # اختیاری
+    "SETTING_VALUE_READER_CLASS": "azbankgateways.readers.DefaultReader",  # اختیاری
+    "BANK_PRIORITIES": [
+    ], 
+    "IS_SAFE_GET_GATEWAY_PAYMENT": True,  # اختیاری، بهتر است True بگذارید.
+    "CUSTOM_APP": None,  # اختیاری
+}
+
 #region log config
 # LOGGING = {
 #     "version": 1,

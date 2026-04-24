@@ -196,6 +196,11 @@ class ProductImage(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "عکس های محصولات"
 
 
+class ProductCommentManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_approved = True)
+
+
 class ProductComment(AuditableModel, SoftDeleteModel):
     # User = created_by
     product = models.ForeignKey(
@@ -212,8 +217,12 @@ class ProductComment(AuditableModel, SoftDeleteModel):
     )
     is_approved = models.BooleanField(default=True, verbose_name="وضعیت تایید نظر",db_index=True)
 
+    objects = ProductCommentManager() 
+    
+    all_objects = models.Manager()
+    
     def __str__(self):
-        return f"نظر محصول {self.created_by.username} - {self.product.name}"
+        return f"محصول {self.product.name} - {self.pk}"
 
     class Meta:
         verbose_name = "نظر محصول"

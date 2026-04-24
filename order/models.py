@@ -42,7 +42,7 @@ class Cart(AuditableModel, SoftDeleteModel):
         ("pay", "پرداخت شده"),
         ("pay_error", "خطا در حین پرداخت"),
     )
-    created_by = models.ForeignKey(
+    created_by = models.OneToOneField(
         User,
         on_delete=models.CASCADE,#Rewrote for this
         null=True,
@@ -161,9 +161,16 @@ class Order(AuditableModel, SoftDeleteModel):
         max_length=100, blank=True, null=True, verbose_name="کد رهیگیری ارسال"
     )
     send_date = models.DateTimeField(blank=True, null=True, verbose_name="تاریخ ارسال")
+    
+    transaction_code = models.CharField(max_length=255, null=False, blank=False,verbose_name='کد تراكنش')
 
     description = models.TextField(blank=True, null=True, verbose_name="توضیحات سفارش")
 
+    first_name = models.CharField(max_length=50,blank=True, null=True, verbose_name = "نام")
+    last_name = models.CharField(max_length=50,blank=True, null=True, verbose_name = "نام خانوادگی")
+    phone_number = models.CharField(max_length=11,blank=True, null=True,verbose_name= "شماره تلفن")
+    email = models.EmailField(blank=True, null=True,verbose_name= "ایمیل")
+    
     is_different_address = models.BooleanField(
         default=False, verbose_name="آدرس متفاوت"
     )

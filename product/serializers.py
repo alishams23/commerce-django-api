@@ -61,19 +61,10 @@ class CommentSerializer(serializers.ModelSerializer):
             return CommentSerializer(obj.replies.all(), many=True).data
         return None
 
-
-# class CommentReplySerializer(serializers.ModelSerializer):
-#     user = UserCommentsSerializer()
-#     class Meta:
-#         model = ProductComment
-#         fields = ['id','user','text','is_approved','replies']
-
-# class CommentSerializer(serializers.ModelSerializer):
-#     user = UserCommentsSerializer()
-#     replies = CommentReplySerializer(many = True)
-#     class Meta:
-#         model = ProductComment
-#         fields = ['id','user','text','is_approved','replies']
+class AddCommentSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField(required = True)
+    comment_id = serializers.IntegerField(required = False,help_text = "The ID of the parent comment if this comment is a reply")
+    text = serializers.CharField(max_length=700)
 
 
 class ImageProductSerializer(serializers.ModelSerializer):

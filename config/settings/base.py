@@ -23,6 +23,7 @@ PROJECT_NAME_APPS = [
     "product",
     "user",
     "order",
+    "payments",
 ]
 
 THIRD_PARTY_APPS = [
@@ -35,7 +36,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
     "colorfield",
     "corsheaders",
-    # "azbankgateways",
+    "azbankgateways",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_NAME_APPS + THIRD_PARTY_APPS
@@ -163,56 +164,3 @@ SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
 CSRF_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
 
 APPEND_SLASH = False
-
-
-# AZ_IRANIAN_BANK_GATEWAYS = {
-#     "GATEWAYS": {
-#         "BMI": {
-#             "MERCHANT_CODE": "<YOUR MERCHANT CODE>",
-#             "TERMINAL_CODE": "<YOUR TERMINAL CODE>",
-#             "SECRET_KEY": "<YOUR SECRET CODE>",
-#         },
-#         "SEP": {
-#             "MERCHANT_CODE": "<YOUR MERCHANT CODE>",
-#             "TERMINAL_CODE": "<YOUR TERMINAL CODE>",
-#         },
-#         "ZARINPAL": {
-#             "MERCHANT_CODE": "<YOUR MERCHANT CODE>",
-#             "SANDBOX": 0,  # 0 disable, 1 active
-#         },
-#         "ZIBAL": {
-#             "MERCHANT_CODE": "<YOUR MERCHANT CODE>",
-#         },
-#         "BAHAMTA": {
-#             "MERCHANT_CODE": "<YOUR MERCHANT CODE>",
-#         },
-#         "MELLAT": {
-#             "TERMINAL_CODE": "<YOUR TERMINAL CODE>",
-#             "USERNAME": "<YOUR USERNAME>",
-#             "PASSWORD": "<YOUR PASSWORD>",
-#         },
-#         "IRANDARGAH": {
-#             "MERCHANT_CODE": "<YOUR MERCHANT CODE>",
-#             "SANDBOX": 0,  # 0 disable, 1 active
-#         },
-#         "ASANPARDAKHT": {
-#             "MERCHANT_CONFIGURATION_ID": "<YOUR MERCHANT CONFIGURATION ID>",
-#             "USERNAME": "<YOUR USERNAME>",
-#             "PASSWORD": "<YOUR PASSWORD>",
-#         },
-#     },
-#     "IS_SAMPLE_FORM_ENABLE": True,  # اختیاری و پیش فرض غیر فعال است
-#     "DEFAULT": "BMI",
-#     "CURRENCY": "IRR",  # اختیاری
-#     "BANK_TIMEOUT": 5,  # اختیاری - تنظیم کردن تایم اوت
-#     "TRACKING_CODE_QUERY_PARAM": "tc",  # اختیاری
-#     "TRACKING_CODE_LENGTH": 16,  # اختیاری
-#     "SETTING_VALUE_READER_CLASS": "azbankgateways.readers.DefaultReader",  # اختیاری
-#     "BANK_PRIORITIES": [
-#         "BMI",
-#         "SEP",
-#         # and so on ...
-#     ],  # اختیاری
-#     "IS_SAFE_GET_GATEWAY_PAYMENT": False,  # اختیاری، بهتر است True بگذارید.
-#     "CUSTOM_APP": None,  # اختیاری
-# }

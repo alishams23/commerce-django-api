@@ -1,9 +1,12 @@
-from rest_framework import generics, filters
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, filters,status
+from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from product.models import Brand, Category, CategoryChildren, Color, Gallery, Product
+from product.models import Brand, Category, CategoryChildren, Color, Gallery, Product, ProductComment
 from django.db.models import Prefetch
 from product.pagination import SearchPagination
 from product.serializers import (
+    AddCommentSerializer,
     BrandSerializer,
     CategoryListSerializer,
     ColorSerializer,
@@ -171,3 +174,26 @@ class GalleryView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = GallerySerializer
     queryset = Gallery.objects.filter(is_published = True,is_deleted = False).only('id','image','order')
+    
+    
+class AddCommentProductView(generics.CreateAPIView):
+    serializer_class = AddCommentSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        product = get_object_or_404(Product, id=serializer.validated_data['product_id'])
+        reply = serializer.validated_data.get('comment_id')
+        
+        if reply:
+            reply = ProductComment.objects.filter(id=reply,product = product).first()
+        
+        ProductComment.objects.create(
+            product=product,
+            created_by=self.request.user,
+            text=serializer.validated_data['text'],
+            reply=reply
+        )
+        
+        return Response({"status":"Success","message":"Add Comment Successfully"},status=status.HTTP_201_CREATED)
