@@ -21,12 +21,6 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(base.BASE_DIR, 'static/')
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(base.BASE_DIR, 'media/') 
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),   
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),     
