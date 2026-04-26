@@ -105,6 +105,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
     comments = CommentSerializer(many=True)
+    user_interest = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = [
@@ -116,12 +117,18 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "discount_percentage",
             "is_published",
             "is_favorite",
+            "user_interest",
             "specifications",
             "description",
             "colors",
             "comments",
         ]
 
+    def get_user_interest(self,obj):
+        user = self.context.get("request").user 
+        if user.is_authenticated:
+            return(user.interests.filter(id = obj.id).exists())
+        return False
 
 # <------------ Category Detail ---------------->
 
