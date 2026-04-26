@@ -414,7 +414,7 @@ class ContactUsView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not isinstance(user, AnonymousUser):
+        if user.is_authenticated:
             serializer.validated_data["phone_number"] = user.phone_number
 
             if user.first_name and user.last_name:

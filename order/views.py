@@ -9,7 +9,6 @@ from order.serializers import (
     ApplyDiscountSerializer,
     CartSerializer,
     DeliverySerializer,
-    DetailPaySerializer,
 )
 
 from product.models import ProductColor
@@ -292,6 +291,3 @@ class CartViewSet(viewsets.ViewSet):
             cart.save()
         return Response({"result": "Discount Code UnApply Successfully"})
     
-class DetailPayView(views.APIView):
-    def get(self,request,*args,**kwargs):
-        return Response(DetailPaySerializer(instance = self.request.user).data)

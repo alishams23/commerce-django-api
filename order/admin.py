@@ -189,7 +189,8 @@ class CartItemAdmin(admin.ModelAdmin):
     
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id','status')
+    search_fields = ("transaction_code",)
 
 
 @admin.register(OrderItem)
