@@ -188,12 +188,6 @@ class Order(AuditableModel, SoftDeleteModel):
     )
     final_price = models.PositiveBigIntegerField(default = 0,verbose_name="مبلغ نهایی(تومان)")
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.total_price == 0:
-            for item in self.items.all():
-                self.total_price += item.total_price
-
     def __str__(self):
         return f"سفارش  {self.id}"
 
@@ -214,10 +208,10 @@ class OrderItem(AuditableModel, SoftDeleteModel):
     product_count = models.PositiveIntegerField(default = 0,verbose_name="تعداد محصول")
     total_price = models.PositiveBigIntegerField(default = 0,verbose_name="جمع جزء(تومان)")
 
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            self.total_price = self.product_count * self.product_price
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.pk:
+    #         self.total_price = self.product_count * self.product_price
+    #     super().save(*args, **kwargs)
 
     def calculate_total_price(self):
         return self.product_count * self.product_price
