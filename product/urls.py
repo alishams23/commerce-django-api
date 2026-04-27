@@ -1,5 +1,5 @@
 from django.urls import path, re_path
-from .views import BrandListView, CategoryListView, ColorListView, GalleryView, ProductsByCategoryView, ProductDetailView, ProductsListView
+from .views import AddCommentProductView, BrandListView, CategoryListView, ColorListView, GalleryView, ProductsByCategoryView, ProductDetailView, ProductsListView
 
 urlpatterns = [
     # ------------------- Home/Index -------------------
@@ -12,4 +12,5 @@ urlpatterns = [
     
     # ------------------- Detail -------------------
     re_path(r'^detail/(?P<slug>[^/]+)/$',ProductDetailView.as_view(),name = "product-detail"),
+    path('add-comment/',AddCommentProductView.as_view(),name = "add-comment"),
 ]

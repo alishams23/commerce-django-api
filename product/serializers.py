@@ -61,19 +61,10 @@ class CommentSerializer(serializers.ModelSerializer):
             return CommentSerializer(obj.replies.all(), many=True).data
         return None
 
-
-# class CommentReplySerializer(serializers.ModelSerializer):
-#     user = UserCommentsSerializer()
-#     class Meta:
-#         model = ProductComment
-#         fields = ['id','user','text','is_approved','replies']
-
-# class CommentSerializer(serializers.ModelSerializer):
-#     user = UserCommentsSerializer()
-#     replies = CommentReplySerializer(many = True)
-#     class Meta:
-#         model = ProductComment
-#         fields = ['id','user','text','is_approved','replies']
+class AddCommentSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField(required = True)
+    comment_id = serializers.IntegerField(required = False,help_text = "The ID of the parent comment if this comment is a reply")
+    text = serializers.CharField(max_length=700)
 
 
 class ImageProductSerializer(serializers.ModelSerializer):
@@ -114,6 +105,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
     comments = CommentSerializer(many=True)
+    user_interest = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = [
@@ -125,12 +117,18 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "discount_percentage",
             "is_published",
             "is_favorite",
+            "user_interest",
             "specifications",
             "description",
             "colors",
             "comments",
         ]
 
+    def get_user_interest(self,obj):
+        user = self.context.get("request").user 
+        if user.is_authenticated:
+            return(user.interests.filter(id = obj.id).exists())
+        return False
 
 # <------------ Category Detail ---------------->
 

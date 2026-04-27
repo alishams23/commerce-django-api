@@ -19,6 +19,7 @@ from django.urls import path,include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from django.conf import settings
 from django.conf.urls.static import static
+from azbankgateways.urls import az_bank_gateways_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,6 +27,8 @@ urlpatterns = [
     path('api/order/', include("order.urls")),
     path('api/product/', include("product.urls")),
     path('api/user/', include("user.urls")),
+    path("api/payments/", include("payments.urls")),
+    path("api/bankgateways/", az_bank_gateways_urls()),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

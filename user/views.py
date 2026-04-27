@@ -288,6 +288,13 @@ class RegisterViewSet(viewsets.ViewSet):
 
 class ResetPasswordViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
+    @extend_schema(
+        summary="Request Password Reset OTP",
+        description="Sends a one-time password (OTP) to the user's phone number for password reset verification.",
+        request=PhoneNumberSerializer,
+        tags=["User"],
+    )
+
     def create(self,request):
         serializer = PhoneNumberSerializer(data = self.request.data)
         serializer.is_valid(raise_exception = True)
@@ -374,6 +381,7 @@ class ProfileViewSet(viewsets.ViewSet):
     
     @action(detail = False,methods = ["GET"])
     def notifications(self,request):
+        #TODO:ADD Pagination
         notifications = Notification.objects.filter(is_published = True).select_related("discount_code")
         for notification in notifications.exclude(user_statuses__user = self.request.user):
             NotificationRead.objects.create(user = self.request.user,notification = notification,read_at = timezone.now())
@@ -383,6 +391,7 @@ class ProfileViewSet(viewsets.ViewSet):
     def comments(self,request):
         return Response(ProductCommentUserSerializer(self.request.user.created_productcomment_set.all().select_related("product"),many = True,context = {'request': request}).data)
     
+    #TODO:Orders
 
 class InterestsViewSet(viewsets.ViewSet):
     lookup_field = 'id'
@@ -405,7 +414,7 @@ class ContactUsView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not isinstance(user, AnonymousUser):
+        if user.is_authenticated:
             serializer.validated_data["phone_number"] = user.phone_number
 
             if user.first_name and user.last_name:

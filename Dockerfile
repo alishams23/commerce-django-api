@@ -19,7 +19,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements/production.txt /app/requirements/production.txt
-RUN pip install --no-cache-dir -r /app/requirements/production.txt
+RUN pip install -i https://mirror-pypi.runflare.com/simple  --no-cache-dir -r /app/requirements/production.txt --trusted-host mirror-pypi.runflare.com
 
 COPY . /app
 

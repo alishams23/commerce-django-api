@@ -42,7 +42,7 @@ class Cart(AuditableModel, SoftDeleteModel):
         ("pay", "پرداخت شده"),
         ("pay_error", "خطا در حین پرداخت"),
     )
-    created_by = models.ForeignKey(
+    created_by = models.OneToOneField(
         User,
         on_delete=models.CASCADE,#Rewrote for this
         null=True,
@@ -161,9 +161,16 @@ class Order(AuditableModel, SoftDeleteModel):
         max_length=100, blank=True, null=True, verbose_name="کد رهیگیری ارسال"
     )
     send_date = models.DateTimeField(blank=True, null=True, verbose_name="تاریخ ارسال")
+    
+    transaction_code = models.CharField(max_length=255, null=False, blank=False,verbose_name='کد تراكنش')
 
     description = models.TextField(blank=True, null=True, verbose_name="توضیحات سفارش")
 
+    first_name = models.CharField(max_length=50,blank=True, null=True, verbose_name = "نام")
+    last_name = models.CharField(max_length=50,blank=True, null=True, verbose_name = "نام خانوادگی")
+    phone_number = models.CharField(max_length=11,blank=True, null=True,verbose_name= "شماره تلفن")
+    email = models.EmailField(blank=True, null=True,verbose_name= "ایمیل")
+    
     is_different_address = models.BooleanField(
         default=False, verbose_name="آدرس متفاوت"
     )
@@ -180,12 +187,6 @@ class Order(AuditableModel, SoftDeleteModel):
         default=0, verbose_name="هزینه ارسال/حمل و نقل(تومان)"
     )
     final_price = models.PositiveBigIntegerField(default = 0,verbose_name="مبلغ نهایی(تومان)")
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.total_price == 0:
-            for item in self.items.all():
-                self.total_price += item.total_price
 
     def __str__(self):
         return f"سفارش  {self.id}"
@@ -207,10 +208,10 @@ class OrderItem(AuditableModel, SoftDeleteModel):
     product_count = models.PositiveIntegerField(default = 0,verbose_name="تعداد محصول")
     total_price = models.PositiveBigIntegerField(default = 0,verbose_name="جمع جزء(تومان)")
 
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            self.total_price = self.product_count * self.product_price
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.pk:
+    #         self.total_price = self.product_count * self.product_price
+    #     super().save(*args, **kwargs)
 
     def calculate_total_price(self):
         return self.product_count * self.product_price
