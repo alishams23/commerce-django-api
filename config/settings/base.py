@@ -1,9 +1,9 @@
 from datetime import timedelta
-from pathlib import Path
 import os
 from django.utils.translation import gettext_lazy as _
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+from config.settings import BASE_DIR
+
 
 AUTH_USER_MODEL = "user.User"
 
@@ -159,6 +159,12 @@ def env_bool(name, default=False):
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
+# celery
+CELERY_BROKER_URL = f"redis://{os.environ.get('REDIS_HOST')}:{os.environ.get('REDIS_PORT')}/0"
+CELERY_RESULT_BACKEND = f"redis://{os.environ.get('REDIS_HOST')}:{os.environ.get('REDIS_PORT')}/0"
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
 CSRF_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
