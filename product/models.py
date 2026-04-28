@@ -1,3 +1,5 @@
+import os
+import uuid
 from django.db import models
 from django.utils.text import slugify
 from core.models.auditable import AuditableModel
@@ -5,6 +7,32 @@ from core.models.soft_delete import SoftDeleteModel
 from colorfield.fields import ColorField
 # Create your models here.
 
+def product_image_upload_to(instance,filename):
+    base_dir = "products/images/product-color/"
+
+    ext = filename.split('.')[-1]
+
+    new_filename = f'{str(uuid.uuid4())[:8]}.{ext}'
+    
+    return os.path.join(base_dir, new_filename)
+
+def icon_image_upload_to(instance,filename):
+    base_dir = "products/images/category-children/icon/"
+
+    ext = filename.split('.')[-1]
+
+    new_filename = f'{str(uuid.uuid4())[:8]}.{ext}'
+    
+    return os.path.join(base_dir, new_filename)
+
+def gallery_image_upload_to(instance,filename):
+    base_dir = "products/gallery/"
+
+    ext = filename.split('.')[-1]
+
+    new_filename = f'{str(uuid.uuid4())[:8]}.{ext}'
+    
+    return os.path.join(base_dir, new_filename)
 
 class Category(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length=50, unique = True ,verbose_name="نام دسته بندی والد")
@@ -29,7 +57,7 @@ class CategoryChildren(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length=50,unique = True,verbose_name="نام دسته بندی فرزند")
     order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش دسته بندی",db_index=True)
     icon = models.ImageField(
-        upload_to="products/image/category-children/icon/",
+        upload_to=icon_image_upload_to,
         blank=True,
         null=True,
         verbose_name="کاور دسته بندی فرزند",
@@ -180,7 +208,7 @@ class ProductImage(AuditableModel, SoftDeleteModel):
         related_name="images",
         verbose_name="عکس مختص رنگ محصول",db_index=True
     )
-    image = models.ImageField(upload_to="products/image/product-color/")  # def upload
+    image = models.ImageField(upload_to=product_image_upload_to)  # def upload
     order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش عکس",db_index=True)
     is_cover = models.BooleanField(
         default=False,
@@ -229,7 +257,7 @@ class ProductComment(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "نظرات محصولات"
 
 class Gallery(AuditableModel,SoftDeleteModel):
-    image = models.ImageField(upload_to = "home/gallery/",verbose_name = "عکس")
+    image = models.ImageField(upload_to = gallery_image_upload_to,verbose_name = "عکس")
     order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش عکس")
     is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار عکس",db_index=True)
     
