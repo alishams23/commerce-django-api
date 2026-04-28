@@ -15,7 +15,7 @@ class User(AbstractUser,AuditableModel, SoftDeleteModel):
     phone_number = models.CharField(max_length=11, unique=True, verbose_name=_("Phone Number"))
     verify_phone_number = models.BooleanField(default=False, verbose_name=_("Phone Verified"))
     birthdate = models.DateField(null=True,blank=True,verbose_name=_("Birthdate"))
-    profile_image = models.ImageField(blank=True, null=True, upload_to="user/image_profile/", verbose_name=_("Profile Image"))
+    profile_image = models.ImageField(blank=True, null=True, upload_to="user/image_profiles/", verbose_name=_("Profile Image"))
     province = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Province"))
     city = models.CharField(max_length=30, blank=True, null=True, verbose_name=_("City"))
     address = models.TextField(blank=True, null=True, verbose_name=_("Address"))

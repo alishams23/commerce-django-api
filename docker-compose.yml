@@ -43,6 +43,26 @@ services:
       - backend
     restart: always
 
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile 
+    container_name: celery
+    command: >
+      sh -c "celery -A config worker --loglevel=info --concurrency=2"
+    volumes:
+      - .:/app 
+    env_file:
+      - .env 
+    depends_on:
+      - db
+      - redis
+      - django 
+    networks:
+      - backend
+    restart: always
+
+
 volumes:
   postgres_commerce_data:
   static_data:
