@@ -1,3 +1,5 @@
+import os
+import uuid
 from django.db import models
 from django.utils.text import slugify
 from core.models.auditable import AuditableModel
@@ -29,7 +31,7 @@ class CategoryChildren(AuditableModel, SoftDeleteModel):
     name = models.CharField(max_length=50,unique = True,verbose_name="نام دسته بندی فرزند")
     order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش دسته بندی",db_index=True)
     icon = models.ImageField(
-        upload_to="products/image/category-children/icon/",
+        upload_to="products/images/category-children/icon/",
         blank=True,
         null=True,
         verbose_name="کاور دسته بندی فرزند",
@@ -180,7 +182,7 @@ class ProductImage(AuditableModel, SoftDeleteModel):
         related_name="images",
         verbose_name="عکس مختص رنگ محصول",db_index=True
     )
-    image = models.ImageField(upload_to="products/image/product-color/")  # def upload
+    image = models.ImageField(upload_to="products/images/product-color/")  # def upload
     order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش عکس",db_index=True)
     is_cover = models.BooleanField(
         default=False,
@@ -229,7 +231,7 @@ class ProductComment(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "نظرات محصولات"
 
 class Gallery(AuditableModel,SoftDeleteModel):
-    image = models.ImageField(upload_to = "home/gallery/",verbose_name = "عکس")
+    image = models.ImageField(upload_to = "home/images/gallery/",verbose_name = "عکس")
     order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش عکس")
     is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار عکس",db_index=True)
     

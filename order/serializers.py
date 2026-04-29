@@ -86,4 +86,10 @@ class ApplyDiscountSerializer(serializers.ModelSerializer):
         if len(value) < 3:
             raise serializers.ValidationError("Discount code must have at least 3 characters.")
         return value
+    
+class DeliverySetSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required = True)
+    class Meta:
+        model = Delivery
+        fields = ['id']
 

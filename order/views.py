@@ -1,4 +1,4 @@
-from rest_framework import generics, status, viewsets,views
+from rest_framework import generics, status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -8,6 +8,7 @@ from order.models import Cart, CartItem, Delivery, DiscountCode
 from order.serializers import (
     ApplyDiscountSerializer,
     CartSerializer,
+    DeliverySetSerializer,
     DeliverySerializer,
 )
 
@@ -55,13 +56,15 @@ class CartViewSet(viewsets.ViewSet):
 
         for item in cart.items.select_related("product_color"):
             current_stock = item.product_color.stock
-            
-            if current_stock == 0 or item.count > current_stock :
-                context.setdefault("warnings", []).append({
-                    "message": f"The item '{item.product_color}' is currently out of stock.",
-                    "item_id": item.id,
-                    "current_stock":current_stock
-                })
+
+            if current_stock == 0 or item.count > current_stock:
+                context.setdefault("warnings", []).append(
+                    {
+                        "message": f"The item '{item.product_color}' is currently out of stock.",
+                        "item_id": item.id,
+                        "current_stock": current_stock,
+                    }
+                )
 
             # elif item.count > current_stock:
             #     context.setdefault("warnings", []).append(
@@ -290,4 +293,24 @@ class CartViewSet(viewsets.ViewSet):
             cart.discount_code = None
             cart.save()
         return Response({"result": "Discount Code UnApply Successfully"})
-    
+
+        
+    @extend_schema(
+        summary="Set delivery method",
+        description="""
+            Updates the user's cart with the selected delivery method.
+            The provided delivery ID must belong to an active delivery option.
+        """,
+        request = DeliverySetSerializer,
+        tags=["Order"],
+    )
+    @action(detail=False, methods=["PATCH"], url_path="delivery/set")
+    def delivery_set(self, request):
+        serializer = DeliverySetSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        cart = self.get_object()
+        cart.delivery_type = get_object_or_404(
+            Delivery, id=serializer.validated_data["id"], is_active=True
+        )
+        cart.save()
+        return Response({"result": "Delivery Set Successfully"})

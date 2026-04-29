@@ -1,12 +1,5 @@
 from datetime import timedelta
 import os
-from dotenv import load_dotenv
-from config.settings import base
-
-dotenv_path = os.path.join(base.BASE_DIR,".env")
-load_dotenv(dotenv_path)
-
-from .base import *
 
 DEBUG = os.environ.get("DEBUG")
 
@@ -33,17 +26,17 @@ AZ_IRANIAN_BANK_GATEWAYS = {
     "GATEWAYS": {
         "ZARINPAL": {
             "MERCHANT_CODE": os.environ.get("ZARINPAL_MERCHANT_CODE", ""),
-            "SANDBOX": 0,  # 0 disable, 1 active
+            "SANDBOX": 0,  
         },
     },
-    "IS_SAMPLE_FORM_ENABLE": True,  # اختیاری و پیش فرض غیر فعال است
+    "IS_SAMPLE_FORM_ENABLE": True,  
     "DEFAULT": "ZARINPAL",
-    "CURRENCY": "IRT",  # اختیاری
-    "TRACKING_CODE_QUERY_PARAM": "tc",  # اختیاری
-    "TRACKING_CODE_LENGTH": 16,  # اختیاری
-    "SETTING_VALUE_READER_CLASS": "azbankgateways.readers.DefaultReader",  # اختیاری
+    "CURRENCY": "IRT",  
+    "TRACKING_CODE_QUERY_PARAM": "tc",  
+    "TRACKING_CODE_LENGTH": 16,  
+    "SETTING_VALUE_READER_CLASS": "azbankgateways.readers.DefaultReader",  
     "BANK_PRIORITIES": [
     ], 
-    "IS_SAFE_GET_GATEWAY_PAYMENT": True,  # اختیاری، بهتر است True بگذارید.
-    "CUSTOM_APP": None,  # اختیاری
+    "IS_SAFE_GET_GATEWAY_PAYMENT": True,  
+    "CUSTOM_APP": None,  
 }
