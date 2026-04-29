@@ -54,6 +54,7 @@ def completing_order(cart_id, tracking_code):
                 order=order,
                 product_name=product_color.product.name,
                 color_code=product_color.color.code,
+                color_name=product_color.color.name,
                 product_price=product_color.price,
                 product_count=cart_item.count,
             )
