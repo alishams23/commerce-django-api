@@ -1,11 +1,11 @@
-from celery import shared_task
+# from celery import shared_task
 from django.db import transaction
 
 from order.models import Cart, Order, OrderItem
 from user.models import User
 
 
-@shared_task
+# @shared_task
 def create_order(validated_data,user_id,tracking_code):
     with transaction.atomic():
         user = User.objects.get(id = user_id)
@@ -28,7 +28,7 @@ def create_order(validated_data,user_id,tracking_code):
         order.save()
 
 
-@shared_task
+# @shared_task
 def completing_order(cart_id, tracking_code):
 
     with transaction.atomic():
@@ -69,7 +69,7 @@ def completing_order(cart_id, tracking_code):
 
         order.save()
 
-@shared_task
+# @shared_task
 def delete_order(tracking_code):
     try:
         Order.objects.get(transaction_code=tracking_code).delete_hard()

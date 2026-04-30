@@ -89,7 +89,7 @@ class PaymentViewSet(viewsets.ViewSet):
 
             bank_record = bank.ready()
 
-            create_order.delay(
+            create_order(
                 serializer.validated_data,
                 self.request.user.id,
                 bank_record.tracking_code,
@@ -126,10 +126,10 @@ class PaymentViewSet(viewsets.ViewSet):
 
         user_cart = self.request.user.created_cart_set
         if bank_record.is_success:
-            completing_order.delay(user_cart.id, tracking_code)
+            completing_order(user_cart.id, tracking_code)
 
             return Response("Ok")
 
         else:
-            delete_order.delay(tracking_code)
+            delete_order(tracking_code)
             return Response("no ")
