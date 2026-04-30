@@ -3,6 +3,13 @@ FROM docker.arvancloud.ir/python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+RUN CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2) \
+ && tee /etc/apt/sources.list <<EOF
+deb http://mirror-linux.runflare.com/debian $CODENAME main contrib non-free non-free-firmware
+deb http://mirror-linux.runflare.com/debian $CODENAME-updates main contrib non-free non-free-firmware
+deb http://mirror-linux.runflare.com/debian-security $CODENAME-security main contrib non-free non-free-firmware
+EOF
+
 WORKDIR /app
 
 RUN apt-get update \

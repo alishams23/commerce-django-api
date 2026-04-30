@@ -110,7 +110,7 @@ class DashboardSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['get_full_name','fist_name','last_name','phone_number','email','date_joined','birthdate','province',
+        fields = ['get_full_name','first_name','last_name','phone_number','email','date_joined','birthdate','province',
                   'city','address','zip_code','receiver_phone_number']
     
     def validate_zip_code(self, value):

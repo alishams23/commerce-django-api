@@ -14,6 +14,8 @@ from user.models import User
 
 from .utils import generate_discount_code
 
+from django.db import transaction
+
 
 # Create your models here.
 
@@ -145,8 +147,10 @@ class CartItem(AuditableModel, SoftDeleteModel):
 
 class Order(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (
+        ("pending", "در انتظار بررسی"),
         ("doing", "در حال آماده سازی"),
         ("send", "ارسال شده"),
+        ("delivered", "تحویل داده شده"),
         ("canceled", "لغو شده"),
     )
     # user/author = created_by
@@ -154,9 +158,12 @@ class Order(AuditableModel, SoftDeleteModel):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICE,
-        default="doing",
+        default="pending",
         verbose_name="وضعیت سفارش",
     )
+    
+    number = models.CharField(max_length=20,unique=True, verbose_name='شماره سفارش')
+    
     tracking_code = models.CharField(
         max_length=100, blank=True, null=True, verbose_name="کد رهیگیری ارسال"
     )
@@ -188,6 +195,17 @@ class Order(AuditableModel, SoftDeleteModel):
     )
     final_price = models.PositiveBigIntegerField(default = 0,verbose_name="مبلغ نهایی(تومان)")
 
+    def generate_number(self):
+        with transaction.atomic():
+            date_str = timezone.now().strftime('%Y%m%d')
+            last_order = Order.objects.select_for_update().filter(number__startswith=date_str).order_by('number').last()
+            
+            if last_order:
+                last_num = int(last_order.number.split('-')[1]) + 1
+            else:
+                last_num = 1
+            return f"{date_str}-{last_num:03d}"
+
     def __str__(self):
         return f"سفارش  {self.id}"
 
@@ -208,10 +226,6 @@ class OrderItem(AuditableModel, SoftDeleteModel):
     product_count = models.PositiveIntegerField(default = 0,verbose_name="تعداد محصول")
     total_price = models.PositiveBigIntegerField(default = 0,verbose_name="جمع جزء(تومان)")
 
-    # def save(self, *args, **kwargs):
-    #     if not self.pk:
-    #         self.total_price = self.product_count * self.product_price
-    #     super().save(*args, **kwargs)
 
     def calculate_total_price(self):
         return self.product_count * self.product_price
