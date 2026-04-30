@@ -3,19 +3,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from product.models import Product
 from product.serializers import ProductListInterestsSerializer
-from user.models import ContactUs, Notification, NotificationRead,User
+from user.models import ContactUs, Notification, NotificationRead, User
+from user.pagination import Pagination10
 from user.serializers import (
     ContactUsSerializer,
     DashboardSerializer,
     IdentitySerializer,
     LoginSerializer,
     NotificationSerializer,
+    OrderListUserSerializer,
     PersonalInfoSerializer,
     PhoneNumberSerializer,
     ProductCommentUserSerializer,
@@ -34,6 +35,7 @@ from django.contrib.auth import authenticate
 from user.service.otp import OTPService
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
 # Create your views here.
+
 
 @extend_schema(
     summary="User login",
@@ -68,9 +70,8 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_seriali
             },
         ),
     },
-    tags = ["User"]
-    )
-
+    tags=["User"],
+)
 class LoginView(login_rest):
     serializer_class = LoginSerializer
 
@@ -84,7 +85,8 @@ class LoginView(login_rest):
 
         user = get_object_or_404(
             User,
-            phone_number=serializer.validated_data["phone_number"],)
+            phone_number=serializer.validated_data["phone_number"],
+        )
 
         if not authenticate(
             request,
@@ -98,7 +100,6 @@ class LoginView(login_rest):
         serializer.validated_data["user"] = user
         self.login(serializer)
         return self.get_response()
-
 
 
 class LogoutView(logout_rest):
@@ -129,6 +130,7 @@ class LogoutView(logout_rest):
 
 class RegisterViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
+
     @extend_schema(
         summary="User registration - Send OTP",
         description="""
@@ -200,6 +202,7 @@ class RegisterViewSet(viewsets.ViewSet):
         print(message)  # Send Code
 
         return Response({"status": "success", "message": "OTP Send Success"})
+
     @extend_schema(
         summary="Verify OTP and create user",
         description="""
@@ -259,15 +262,17 @@ class RegisterViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        register_info = get_object_or_404(RegistrationSession,phone_number=phone_number)
-        
+        register_info = get_object_or_404(
+            RegistrationSession, phone_number=phone_number
+        )
+
         user = User.objects.create(
             username=register_info.phone_number,
             phone_number=register_info.phone_number,
             password=register_info.password_hash,
             birthdate=register_info.birthdate,
             email=register_info.email,
-            receiver_phone_number = register_info.phone_number,
+            receiver_phone_number=register_info.phone_number,
             verify_phone_number=True,
         )
         register_info.delete_hard()
@@ -288,27 +293,30 @@ class RegisterViewSet(viewsets.ViewSet):
 
 class ResetPasswordViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
+
     @extend_schema(
         summary="Request Password Reset OTP",
         description="Sends a one-time password (OTP) to the user's phone number for password reset verification.",
         request=PhoneNumberSerializer,
         tags=["User"],
     )
+    def create(self, request):
+        serializer = PhoneNumberSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        phone_number = serializer.validated_data["phone_number"]
 
-    def create(self,request):
-        serializer = PhoneNumberSerializer(data = self.request.data)
-        serializer.is_valid(raise_exception = True)
-        phone_number = serializer.validated_data['phone_number']
-        
-        if not User.objects.filter(phone_number = phone_number).exists():
+        if not User.objects.filter(phone_number=phone_number).exists():
             return Response(
                 {"status": "error", "message": "User Not Register"},
-                status=status.HTTP_400_BAD_REQUEST,)
-        
-        otp_service = OTPService(serializer.validated_data['phone_number'],"reset_password")
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        success,message = otp_service.generate_code()
-        
+        otp_service = OTPService(
+            serializer.validated_data["phone_number"], "reset_password"
+        )
+
+        success, message = otp_service.generate_code()
+
         if success is False:
             return Response(
                 {"status": "error", "message": message},
@@ -318,7 +326,12 @@ class ResetPasswordViewSet(viewsets.ViewSet):
         print(message)  # Send Code
 
         return Response({"status": "success", "message": "OTP Send Success"})
-    
+
+    @extend_schema(
+        summary="Verify Password Reset",
+        request=ResetPasswordSerializer,
+        tags=["User"],
+    )
     @action(detail=False, methods=["POST"], url_path="verify")
     def verify(self, request):
 
@@ -339,74 +352,140 @@ class ResetPasswordViewSet(viewsets.ViewSet):
                 {"status": "error", "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        user = User.objects.get(phone_number = phone_number)
+
+        user = User.objects.get(phone_number=phone_number)
         user.set_password(serializer.validated_data["password"])
         user.save()
-        
-        return Response({"status": "success", "message": "Password has been reset successfully."})
-            
+
+        return Response(
+            {"status": "success", "message": "Password has been reset successfully."}
+        )
 
 
 class ProfileViewSet(viewsets.ViewSet):
-    
-    @action(detail = False,methods = ["GET"])
-    def identity(self,request):
-        return Response(IdentitySerializer(instance = self.request.user,context = {'request': request}).data)
-    
-    @action(detail = False,methods = ["GET","PATCH"])
-    def dashboard(self,request):
-        if self.request.method == 'GET':
-            return Response(DashboardSerializer(instance = self.request.user).data)
+    @action(detail=False, methods=["GET"])
+    def identity(self, request):
+        return Response(
+            IdentitySerializer(
+                instance=self.request.user, context={"request": request}
+            ).data
+        )
 
-        serializer = DashboardSerializer(data = self.request.data,instance = self.request.user) 
-        serializer.is_valid(raise_exception = True)
+    @action(detail=False, methods=["GET", "PATCH"])
+    def dashboard(self, request):
+        if self.request.method == "GET":
+            return Response(DashboardSerializer(instance=self.request.user).data)
+
+        serializer = DashboardSerializer(
+            data=self.request.data, instance=self.request.user
+        )
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    
-    @action(detail = False,methods = ["GET","PATCH"],url_path = 'personal-info')
-    def personal_info(self,request):
 
-        if self.request.method == 'GET':
-            return Response(PersonalInfoSerializer(instance = self.request.user,context = {'request': request}).data)
-        
-        serializer = PersonalInfoSerializer(data = self.request.data,instance = self.request.user,context = {'request': request}) 
-        serializer.is_valid(raise_exception = True)
+    @action(detail=False, methods=["GET", "PATCH"], url_path="personal-info")
+    def personal_info(self, request):
+
+        if self.request.method == "GET":
+            return Response(
+                PersonalInfoSerializer(
+                    instance=self.request.user, context={"request": request}
+                ).data
+            )
+
+        serializer = PersonalInfoSerializer(
+            data=self.request.data,
+            instance=self.request.user,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    
-    @action(detail = False,methods = ["GET"])
-    def interests(self,request):
-        return Response(ProductListInterestsSerializer(self.request.user.interests,many = True).data)
-    
-    @action(detail = False,methods = ["GET"])
-    def notifications(self,request):
-        #TODO:ADD Pagination
-        notifications = Notification.objects.filter(is_published = True).select_related("discount_code")
-        for notification in notifications.exclude(user_statuses__user = self.request.user):
-            NotificationRead.objects.create(user = self.request.user,notification = notification,read_at = timezone.now())
-        return Response(NotificationSerializer(notifications,many = True).data)
 
-    @action(detail = False,methods = ["GET"])
-    def comments(self,request):
-        return Response(ProductCommentUserSerializer(self.request.user.created_productcomment_set.all().select_related("product"),many = True,context = {'request': request}).data)
-    
-    #TODO:Orders
+    @action(detail=False, methods=["GET"])
+    def interests(self, request):
+        return Response(
+            ProductListInterestsSerializer(
+                Pagination10().paginate_queryset(
+                    self.request.user.interests.all(), request
+                ),
+                many=True,
+            ).data
+        )
+
+    @action(detail=False, methods=["GET"])
+    def notifications(self, request):
+
+        user_notifications = (
+            Notification.objects.filter(is_published=True)
+            .select_related("discount_code")
+            .prefetch_related("user_statuses")
+        )
+
+        page = Pagination10().paginate_queryset(user_notifications, request)
+
+        unread = user_notifications.exclude(
+            user_statuses__user=self.request.user
+        )
+        unread_in_page = unread.filter(id__in = [notification.id for notification in page])
+
+        if unread_in_page.exists():
+            NotificationRead.objects.bulk_create(
+                [
+                    NotificationRead(
+                        user=self.request.user,
+                        notification=notification,
+                        read_at=timezone.now(),
+                    )
+                    for notification in unread_in_page
+                ]
+            )
+
+        return Response(NotificationSerializer(page, many=True).data)
+
+    @action(detail=False, methods=["GET"])
+    def comments(self, request):
+        return Response(
+            ProductCommentUserSerializer(
+                Pagination10().paginate_queryset(
+                    self.request.user.created_productcomment_set.all().select_related(
+                        "product"
+                    ),
+                    request,
+                ),
+                many=True,
+                context={"request": request},
+            ).data
+        )
+
+    @action(detail=False, methods=["GET"])
+    def orders(self, request):
+        return Response(
+            OrderListUserSerializer(
+                Pagination10().paginate_queryset(
+                    self.request.user.created_order_set.all(), request
+                ),
+                many=True,
+            ).data
+        )
+
 
 class InterestsViewSet(viewsets.ViewSet):
-    lookup_field = 'id'
-    @action(detail = True,methods = ["POST"])
-    def add(self,request,id):
-        self.request.user.interests.add(get_object_or_404(Product,id = id))
-        return Response({"status":"Success","Message":"Product Add To Interests."})
-    
-    @action(detail = True,methods = ["Delete"])
-    def remove(self,request,id):
-        self.request.user.interests.remove(get_object_or_404(Product,id = id))
-        return Response({"status":"Success","Message":"Product Removed To Interests."})
+    lookup_field = "id"
 
-    
-    
+    @action(detail=True, methods=["POST"])
+    def add(self, request, id):
+        self.request.user.interests.add(get_object_or_404(Product, id=id))
+        return Response({"status": "Success", "Message": "Product Add To Interests."})
+
+    @action(detail=True, methods=["Delete"])
+    def remove(self, request, id):
+        self.request.user.interests.remove(get_object_or_404(Product, id=id))
+        return Response(
+            {"status": "Success", "Message": "Product Removed To Interests."}
+        )
+
+
 class ContactUsView(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ContactUsSerializer
