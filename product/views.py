@@ -6,7 +6,7 @@ from product.models import Brand, Category, CategoryChildren, Color, Gallery, Pr
 from django.db.models import Prefetch
 from product.pagination import SearchPagination
 from product.serializers import (
-    AddCommentSerializer,
+    ProductAddCommentSerializer,
     BrandSerializer,
     CategoryListSerializer,
     ColorSerializer,
@@ -177,7 +177,7 @@ class GalleryView(generics.ListAPIView):
     
     
 class AddCommentProductView(generics.CreateAPIView):
-    serializer_class = AddCommentSerializer
+    serializer_class = ProductAddCommentSerializer
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
