@@ -132,7 +132,7 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
     password = serializers.CharField(required = False,max_length=128,write_only = True)
     class Meta:
         model = User
-        fields = ['profile_image','get_full_name','username','phone_number','email','province',
+        fields = ['profile_image','get_full_name','first_name','last_name','username','phone_number','email','province',
                   'city','address','zip_code','password']
         
     def validate_zip_code(self, value):

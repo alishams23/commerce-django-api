@@ -33,7 +33,7 @@ from rest_framework import serializers
 from user.models import RegistrationSession
 from django.contrib.auth import authenticate
 from user.service.otp import OTPService
-from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, OpenApiResponse, inline_serializer, extend_schema
 # Create your views here.
 
 
@@ -363,6 +363,15 @@ class ResetPasswordViewSet(viewsets.ViewSet):
 
 
 class ProfileViewSet(viewsets.ViewSet):
+    
+    @extend_schema(
+        summary="Retrieve User Identity",
+        description="""
+            Returns the profile information of the current user.
+        """,
+        responses = IdentitySerializer,
+        tags=["User"],
+    )
     @action(detail=False, methods=["GET"])
     def identity(self, request):
         return Response(
@@ -371,6 +380,19 @@ class ProfileViewSet(viewsets.ViewSet):
             ).data
         )
 
+    @extend_schema(
+        summary="Retrieve and Update Dashboard Data",
+        description="""
+            Retrieves or updates the user's dashboard data.
+
+            - GET: Fetch current dashboard info.
+            - PATCH: Update dashboard info.
+        """,
+        request = DashboardSerializer,
+        responses = DashboardSerializer,
+        tags=["User"],
+    )
+    
     @action(detail=False, methods=["GET", "PATCH"])
     def dashboard(self, request):
         if self.request.method == "GET":
@@ -383,6 +405,19 @@ class ProfileViewSet(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Retrieve and Update Personal Info",
+        description="""
+            Gets or updates the user's personal information.
+
+            - GET: Fetch personal info.
+            - PATCH: Update personal info.
+        """,
+        request = PersonalInfoSerializer,
+        responses = PersonalInfoSerializer,
+        tags=["User"],
+    )
+    
     @action(detail=False, methods=["GET", "PATCH"], url_path="personal-info")
     def personal_info(self, request):
 
@@ -402,6 +437,15 @@ class ProfileViewSet(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Get User Interests",
+        description="""
+            Retrieves a paginated list of the user's interests.
+        """,
+        responses = ProductListInterestsSerializer,
+        tags=["User"],
+    )
+    
     @action(detail=False, methods=["GET"])
     def interests(self, request):
         return Response(
@@ -413,6 +457,18 @@ class ProfileViewSet(viewsets.ViewSet):
             ).data
         )
 
+    @extend_schema(
+        summary="Get user notifications",
+        description="""
+            Returns a paginated list of published notifications.
+
+            Marks unread notifications in the current page as read.
+        """,
+
+        responses = NotificationSerializer,
+        tags=["User"],
+    )
+    
     @action(detail=False, methods=["GET"])
     def notifications(self, request):
 
@@ -443,6 +499,17 @@ class ProfileViewSet(viewsets.ViewSet):
 
         return Response(NotificationSerializer(page, many=True).data)
 
+    @extend_schema(
+        summary="Retrieve User Comments",
+        description="""
+            Returns a paginated list of comments made by the user on products.
+        """,
+
+
+        responses = ProductCommentUserSerializer,
+        tags=["User"],
+    )
+    
     @action(detail=False, methods=["GET"])
     def comments(self, request):
         return Response(
@@ -458,6 +525,18 @@ class ProfileViewSet(viewsets.ViewSet):
             ).data
         )
 
+    @extend_schema(
+        summary="Retrieve User Orders",
+        description="""
+            Returns a paginated list of orders created by the user.
+        """,
+
+
+
+        responses = OrderListUserSerializer,
+        tags=["User"],
+    )
+    
     @action(detail=False, methods=["GET"])
     def orders(self, request):
         return Response(
@@ -469,6 +548,22 @@ class ProfileViewSet(viewsets.ViewSet):
             ).data
         )
 
+@extend_schema(
+    summary="Manage User Interests",
+    description="""
+        Authenticated users to add or remove products from their interests list.
+    """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description="Product ID",
+            required=True,
+        ),
+    ],
+    tags=["User"],
+)
 
 class InterestsViewSet(viewsets.ViewSet):
     lookup_field = "id"
@@ -484,6 +579,16 @@ class InterestsViewSet(viewsets.ViewSet):
         return Response(
             {"status": "Success", "Message": "Product Removed To Interests."}
         )
+
+@extend_schema(
+    summary="Contact Us Request",
+    description="""
+        Creates a new contact-us request.
+
+        - Allows anonymous users (AllowAny) can request.
+    """,
+    tags=["User"],
+)
 
 
 class ContactUsView(generics.CreateAPIView):

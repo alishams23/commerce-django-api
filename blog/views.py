@@ -140,9 +140,12 @@ class BlogLikeViewSet(viewsets.ViewSet):
         )
 
 @extend_schema(
-    summary="Add comment for blog ",
+    summary="Add Comment to Blog ",
     description="""
-        Authenticated users to Add comment for of a published blog post.
+        Allows a user to add a comment to a specific Blog
+        Supports:
+        - Ability to reply to an existing comment by providing its ID.
+        - Requires user authentication.
     """,
     tags=["Blog"],
 )
