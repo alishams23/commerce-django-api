@@ -87,6 +87,7 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ("title", "is_published", "published_at","subject","created_at")
     search_fields = ("title", "text")
     list_filter = ("is_published", "published_at","subject","created_at")
+    list_editable = ("is_published",)
     readonly_fields = ('published_at','created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     fieldsets = (
         (_("موضوع"), {"fields": ("subject","discount_code")}),

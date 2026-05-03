@@ -6,7 +6,7 @@ from product.models import Brand, Category, CategoryChildren, Color, Gallery, Pr
 from django.db.models import Prefetch
 from product.pagination import SearchPagination
 from product.serializers import (
-    AddCommentSerializer,
+    ProductAddCommentSerializer,
     BrandSerializer,
     CategoryListSerializer,
     ColorSerializer,
@@ -175,9 +175,18 @@ class GalleryView(generics.ListAPIView):
     serializer_class = GallerySerializer
     queryset = Gallery.objects.filter(is_published = True,is_deleted = False).only('id','image','order')
     
-    
+@extend_schema(
+    summary="Add Comment to Product ",
+    description="""
+        Allows a user to add a comment to a specific product
+        Supports:
+        - Ability to reply to an existing comment by providing its ID.
+        - Requires user authentication.
+    """,
+    tags=["Product"],
+)   
 class AddCommentProductView(generics.CreateAPIView):
-    serializer_class = AddCommentSerializer
+    serializer_class = ProductAddCommentSerializer
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

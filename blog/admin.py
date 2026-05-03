@@ -1,12 +1,12 @@
 from django.contrib import admin
-from .models import Blog, BlogMedia, BlogComment
+from .models import Blog, BlogMedia, BlogComment, CategoryBlog
 
 
 class BlogMediaInline(admin.TabularInline):
     model = BlogMedia
     extra = 1  
-    fields = ('image', 'video', 'created_at')
-    readonly_fields = ('created_at',)
+    fields = ('media','media_type')
+    readonly_fields = ('media_type',)
     verbose_name = "رسانه"
     verbose_name_plural = "رسانه‌ها"
 
@@ -19,18 +19,26 @@ class BlogCommentInline(admin.TabularInline):
     verbose_name = "نظر"
     verbose_name_plural = "نظرات"
 
+@admin.register(CategoryBlog)
+class CategoryBlogAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
+    list_editable = ('order','is_active','is_deleted')
+    search_fields = ('name',)
+    ordering = ('order',)
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 @admin.register(Blog)
 class BlogAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'created_by', 'is_published', 'published_at', 'created_at')
-    list_filter = ('is_published', 'created_by', 'published_at')
+    list_display = ('id', 'title','reading_time','created_by', 'is_published', 'published_at', 'created_at')
+    list_filter = ('category','is_published', 'created_by', 'published_at')
+    prepopulated_fields = {"slug":("title",)}
     search_fields = ('title', 'created_by__username', 'text_body')
-    readonly_fields = ('created_at', 'updated_at', 'published_at','deleted_at', 'created_by', 'updated_by')
+    readonly_fields = ('reading_time','created_at', 'updated_at', 'published_at','deleted_at', 'updated_by')
     inlines = [BlogMediaInline, BlogCommentInline]
     ordering = ('-published_at', '-created_at')
     fieldsets = (
         (None, {
-            'fields': ('created_by', 'title', 'text_body', 'is_published','is_deleted')
+            'fields': ('created_by','category','title','slug','text_body','cover','is_published','is_deleted','likes')
         }),
         ('زمان‌بندی', {
             'fields': ('published_at', 'created_at', 'updated_at')
@@ -40,10 +48,10 @@ class BlogAdmin(admin.ModelAdmin):
 
 @admin.register(BlogMedia)
 class BlogMediaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'blog', 'image', 'video', 'created_at')
+    list_display = ('id', 'blog','media_type', 'created_at')
     list_filter = ('blog',)
     search_fields = ('blog__title',)
-    readonly_fields = ('created_at', 'updated_at','deleted_at', 'created_by', 'updated_by')
+    readonly_fields = ('media_type','created_at', 'updated_at','deleted_at', 'created_by', 'updated_by')
 
 
 @admin.register(BlogComment)
@@ -52,3 +60,6 @@ class BlogCommentAdmin(admin.ModelAdmin):
     list_filter = ('is_approved', 'blog', 'created_by')
     search_fields = ('text', 'created_by__username', 'blog__title')
     readonly_fields = ('created_at', 'updated_at','deleted_at', 'created_by', 'updated_by')
+
+    def get_queryset(self, request):
+        return BlogComment.all_objects.all()

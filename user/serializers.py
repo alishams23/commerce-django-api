@@ -1,6 +1,6 @@
 import re
 from rest_framework import serializers
-from order.models import DiscountCode
+from order.models import DiscountCode, Order
 from product.models import Product, ProductComment, ProductImage
 from user.models import ContactUs, Notification, User
 from rest_framework.validators import UniqueValidator
@@ -132,7 +132,7 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
     password = serializers.CharField(required = False,max_length=128,write_only = True)
     class Meta:
         model = User
-        fields = ['profile_image','get_full_name','username','phone_number','email','province',
+        fields = ['profile_image','get_full_name','first_name','last_name','username','phone_number','email','province',
                   'city','address','zip_code','password']
         
     def validate_zip_code(self, value):
@@ -168,3 +168,12 @@ class ProductCommentUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductComment
         fields = ['product','text','created_at','is_approved']
+        
+class OrderListUserSerializer(serializers.ModelSerializer):
+    item_counts = serializers.SerializerMethodField()
+    class Meta:
+        model = Order
+        fields = ['number','created_at','status','final_price','item_counts']
+        
+    def get_item_counts(self,obj):
+        return obj.items.count()

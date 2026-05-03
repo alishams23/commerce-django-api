@@ -207,7 +207,7 @@ class Order(AuditableModel, SoftDeleteModel):
             return f"{date_str}-{last_num:03d}"
 
     def __str__(self):
-        return f"سفارش  {self.id}"
+        return f"سفارش  {self.number}"
 
     class Meta:
         verbose_name = "سفارش"
@@ -219,6 +219,7 @@ class OrderItem(AuditableModel, SoftDeleteModel):
         Order, on_delete=models.CASCADE, related_name="items", verbose_name="سفارش"
     )
     product_name = models.CharField(max_length=100, verbose_name="نام محصول")
+    color_name = models.CharField(max_length=50,blank = True,null = True,verbose_name="نام رنگ")
     color_code = ColorField(default = "#ffffff" ,verbose_name="کد رنگ (HEX)")
     product_price = models.PositiveBigIntegerField(default = 0,
         verbose_name="قیمت پایه محصول", db_index=True
@@ -231,7 +232,7 @@ class OrderItem(AuditableModel, SoftDeleteModel):
         return self.product_count * self.product_price
 
     def __str__(self):
-        return f"آیتم سفارش  {self.order.id}"
+        return f"آیتم سفارش  {self.order.number}"
 
     class Meta:
         verbose_name = "آیتم سفارش"

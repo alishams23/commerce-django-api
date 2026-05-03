@@ -118,6 +118,7 @@ class Notification(AuditableModel, SoftDeleteModel):
     class Meta:
         verbose_name = _("Notification")
         verbose_name_plural = _("Notifications")
+        ordering = ("-created_at",)
 
 
 class NotificationRead(AuditableModel, SoftDeleteModel):

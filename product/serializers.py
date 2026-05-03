@@ -48,7 +48,7 @@ class CategoryListSerializer(serializers.ModelSerializer):
 
 # <------------ Comment ---------------->
 
-class CommentSerializer(serializers.ModelSerializer):
+class ProductCommentSerializer(serializers.ModelSerializer):
     created_by = UserCommentsSerializer()
     replies = serializers.SerializerMethodField("get_replies")
 
@@ -58,10 +58,10 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def get_replies(self, obj):
         if obj.replies.exists():
-            return CommentSerializer(obj.replies.all(), many=True).data
+            return ProductCommentSerializer(obj.replies.all(), many=True).data
         return None
 
-class AddCommentSerializer(serializers.Serializer):
+class ProductAddCommentSerializer(serializers.Serializer):
     product_id = serializers.IntegerField(required = True)
     comment_id = serializers.IntegerField(required = False,help_text = "The ID of the parent comment if this comment is a reply")
     text = serializers.CharField(max_length=700)
@@ -104,7 +104,7 @@ class ProductListInterestsSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
-    comments = CommentSerializer(many=True)
+    comments = ProductCommentSerializer(many=True)
     user_interest = serializers.SerializerMethodField()
     class Meta:
         model = Product

@@ -32,6 +32,7 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
+    "django_ckeditor_5",
     "dj_rest_auth",
     "drf_spectacular",
     "colorfield",
@@ -170,3 +171,34 @@ SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
 CSRF_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", default=False)
 
 APPEND_SLASH = False
+
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': [
+            'heading', '|',
+            'bold', 'italic', 'underline', '|',
+            'fontSize', '|',
+            'fontColor', 'fontBackgroundColor', '|',
+            'alignment', 'outdent', 'indent', '|',
+            'bulletedList', 'numberedList', '|',
+            'link', 'imageUpload', 'insertTable', '|',
+            'undo', 'redo'
+        ],
+        'height': 300,
+        'width': 'auto',
+        'language': 'fa',
+        'fontSize': {
+            'options': [10, 12, 14, 16, 'default', 18, 20, 24],
+        },
+        'extraAllowedContent': '*{color}',
+        'contentCss': [
+            'body { color: black; }'
+        ],
+        'image': {
+            'upload': {
+                'types': ['jpeg', 'png', 'gif', 'bmp', 'webp'],
+                'directory': 'blog/content/%Y/%m/'
+            }
+        }
+    },
+}
