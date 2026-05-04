@@ -45,7 +45,7 @@ def completing_order(cart_id, tracking_code):
         )
 
         order.final_price = (
-            order.total_price - order.discount_price + order.delivery_price
+            order.discount_price + order.delivery_price
         )
 
         for cart_item in user_cart.items.all().select_related("product_color"):
@@ -66,7 +66,7 @@ def completing_order(cart_id, tracking_code):
         
         if user_cart.discount_code:
             user_cart.discount_code.increment_usage()
-
+        order.status = 'doing'
         order.save()
 
 # @shared_task
