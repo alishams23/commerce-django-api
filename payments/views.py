@@ -127,7 +127,7 @@ def callback_gateway_view(request):
 
     context = {
         "tracking_code": tracking_code,
-        "frontend_return_url": "http://127.0.0.1:8000/",
+        "frontend_return_url": "https://faratabesh.co/",
     }
 
     user_cart = order.created_by.created_cart_set

@@ -2,7 +2,7 @@ import django_filters
 from django_filters import rest_framework as filters
 from product.models import Product
 
-class NumberInFilter(filters.BaseInFilter, filters.NumberFilter):
+class NameInFilter(filters.BaseInFilter, filters.CharFilter):
     pass
 
 class ProductFilter(django_filters.FilterSet):
@@ -10,11 +10,13 @@ class ProductFilter(django_filters.FilterSet):
 
     max_price = django_filters.NumberFilter(field_name="fixed_price", lookup_expr="lte")
 
-    brand = NumberInFilter(field_name="brand__id",lookup_expr='in')
+    brand = NameInFilter(field_name="brand__name",lookup_expr='in')
 
-    color = NumberInFilter(field_name="colors__color__id",lookup_expr = 'in')
+    color = NameInFilter(field_name="colors__color__name",lookup_expr = 'in')
+
+    category = NameInFilter(field_name="category__name",lookup_expr = 'in')
 
     class Meta:
         model = Product
-        fields = ["min_price", "max_price", "brand", "color"]
+        fields = ["min_price", "max_price", "brand", "color","category"]
 

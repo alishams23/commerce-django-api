@@ -81,38 +81,6 @@ class ProductsListView(generics.ListAPIView):
     ]
 
 
-@extend_schema(
-    summary="List Products By Category (Children)",
-    description="""
-        Returns paginated products of a specific **category child**.
-
-        The `id` in the URL must be the **CategoryChildren ID** (not parent category).
-
-        Supports:
-        - search
-        - ordering
-        - filters (price, brand, color)
-    """,
-    parameters=[
-        OpenApiParameter(
-            name="id",
-            type=OpenApiTypes.INT,
-            location=OpenApiParameter.PATH,
-            description="CategoryChildren ID",
-            required=True,
-        ),
-    ],
-    tags=["Product"],
-)
-class ProductsByCategoryView(ProductsListView):
-    def get_queryset(self):
-        return Product.objects.filter(
-            category__id=self.kwargs["id"],
-            is_published=True,
-            is_deleted=False,
-            category__is_active=True,
-            category__is_deleted=False,
-        ).prefetch_related("colors", "colors__images")
 
 
 @extend_schema(
