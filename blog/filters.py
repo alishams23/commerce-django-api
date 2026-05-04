@@ -1,12 +1,8 @@
 import django_filters
 
-from django_filters import rest_framework as filters
-
 from blog.models import Blog
+from core.filters.char_filter import CharInFilter
 
-
-class CharInFilter(filters.BaseInFilter, filters.CharFilter):
-    pass
 
 class BlogFilter(django_filters.FilterSet):
     

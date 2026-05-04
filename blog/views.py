@@ -57,9 +57,7 @@ class BlogListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = BlogListSerializer
     pagination_class = SearchPagination
-    queryset = Blog.objects.filter(is_published=True, is_deleted=False).select_related(
-        "category"
-    )
+    queryset = Blog.objects.select_related("category").filter(is_published=True, is_deleted=False,category__is_active = True)
 
     filterset_class = BlogFilter
 
