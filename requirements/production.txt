@@ -15,3 +15,4 @@ django-colorfield==0.14.0
 django-cors-headers==4.3.1
 celery==5.6.3
 celery[redis]
+django-ckeditor-5==0.2.20

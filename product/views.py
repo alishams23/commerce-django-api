@@ -3,10 +3,10 @@ from rest_framework import generics, filters,status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from product.models import Brand, Category, CategoryChildren, Color, Gallery, Product, ProductComment
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch
 from product.pagination import SearchPagination
 from product.serializers import (
-    AddCommentSerializer,
+    ProductAddCommentSerializer,
     BrandSerializer,
     CategoryListSerializer,
     ColorSerializer,
@@ -14,7 +14,7 @@ from product.serializers import (
     ProductDetailSerializer,
     ProductListSerializer,
 )
-from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProductFilter
 
@@ -58,8 +58,13 @@ class ProductsListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ProductListSerializer
     pagination_class = SearchPagination
-    queryset = Product.objects.filter(is_published=True, is_deleted=False).prefetch_related("colors__images","colors__color").distinct()
-
+    queryset = (
+        Product.objects.filter(is_published=True, is_deleted=False)
+        .prefetch_related("colors__images", "colors__color")
+        .annotate(rating=Count("interested_users", distinct=True))
+        .distinct()
+    )
+    
     filterset_class = ProductFilter
 
     filter_backends = [
@@ -76,43 +81,10 @@ class ProductsListView(generics.ListAPIView):
     ordering_fields = [
         "fixed_price",
         "created_at",
-        # "is_favorite",#TODO
-        # "rating",#TODO
+        "rating",
     ]
 
 
-@extend_schema(
-    summary="List Products By Category (Children)",
-    description="""
-        Returns paginated products of a specific **category child**.
-
-        The `id` in the URL must be the **CategoryChildren ID** (not parent category).
-
-        Supports:
-        - search
-        - ordering
-        - filters (price, brand, color)
-    """,
-    parameters=[
-        OpenApiParameter(
-            name="id",
-            type=OpenApiTypes.INT,
-            location=OpenApiParameter.PATH,
-            description="CategoryChildren ID",
-            required=True,
-        ),
-    ],
-    tags=["Product"],
-)
-class ProductsByCategoryView(ProductsListView):
-    def get_queryset(self):
-        return Product.objects.filter(
-            category__id=self.kwargs["id"],
-            is_published=True,
-            is_deleted=False,
-            category__is_active=True,
-            category__is_deleted=False,
-        ).prefetch_related("colors", "colors__images")
 
 
 @extend_schema(
@@ -175,9 +147,18 @@ class GalleryView(generics.ListAPIView):
     serializer_class = GallerySerializer
     queryset = Gallery.objects.filter(is_published = True,is_deleted = False).only('id','image','order')
     
-    
+@extend_schema(
+    summary="Add Comment to Product ",
+    description="""
+        Allows a user to add a comment to a specific product
+        Supports:
+        - Ability to reply to an existing comment by providing its ID.
+        - Requires user authentication.
+    """,
+    tags=["Product"],
+)   
 class AddCommentProductView(generics.CreateAPIView):
-    serializer_class = AddCommentSerializer
+    serializer_class = ProductAddCommentSerializer
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
