@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/user/', include("user.urls")),
     path("api/payments/", include("payments.urls")),
     path("api/bankgateways/", az_bank_gateways_urls()),
+    path('ckeditor5/', include('django_ckeditor_5.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
