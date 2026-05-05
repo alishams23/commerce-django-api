@@ -1,3 +1,5 @@
+from django.http import Http404
+from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -15,6 +17,7 @@ from django.urls import reverse
 
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+from order.models import Order
 from payments.serializers import DetailPaySerializer
 
 from payments.tasks import create_order, completing_order, delete_order
@@ -72,7 +75,7 @@ class PaymentViewSet(viewsets.ViewSet):
         serializer = DetailPaySerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
 
-        amount = user_cart.total_price
+        amount = user_cart.final_price
 
         user_mobile_number = getattr(user, "phone_number", " ")
 
@@ -82,9 +85,7 @@ class PaymentViewSet(viewsets.ViewSet):
             bank.set_request(request)
             bank.set_amount(amount)
 
-            bank.set_client_callback_url(
-                reverse("payments:payment-callback-gateway-view")
-            )
+            bank.set_client_callback_url(reverse("payments:callback-gateway"))
             bank.set_mobile_number(user_mobile_number)
 
             bank_record = bank.ready()
@@ -102,34 +103,39 @@ class PaymentViewSet(viewsets.ViewSet):
         except AZBankGatewaysException as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
-        summary="Callback Gateway",
-        tags=["Payment"],
-    )
-    @action(detail=False, methods=["GET"], url_path="callback-gateway")
-    def callback_gateway_view(self, request):
-        tracking_code = request.GET.get(settings.TRACKING_CODE_QUERY_PARAM, None)
 
-        if not tracking_code:
-            return Response(
-                {"status": "error", "message": "tracking code is invalid."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        try:
-            bank_record = bank_models.Bank.objects.get(tracking_code=tracking_code)
+def callback_gateway_view(request):
+    tracking_code = request.GET.get(settings.TRACKING_CODE_QUERY_PARAM, None)
 
-        except bank_models.Bank.DoesNotExist:
-            return Response(
-                {"status": "error", "message": "tracking code is incorrect."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+    try:
+        order = Order.objects.select_related("created_by").get(
+            transaction_code=tracking_code
+        )
+    except Order.DoesNotExist:
+        raise Http404
 
-        user_cart = self.request.user.created_cart_set
-        if bank_record.is_success:
-            completing_order(user_cart.id, tracking_code)
+    if order.status != "pending_pay":
+        raise Http404
 
-            return Response("Ok")
+    if not tracking_code:
+        raise Http404
+    try:
+        bank_record = bank_models.Bank.objects.get(tracking_code=tracking_code)
 
-        else:
-            delete_order(tracking_code)
-            return Response("no ")
+    except bank_models.Bank.DoesNotExist:
+        raise Http404
+
+    context = {
+        "tracking_code": tracking_code,
+        "frontend_return_url": "https://faratabesh.co/",
+    }
+
+    user_cart = order.created_by.created_cart_set
+
+    if bank_record.is_success and (int(bank_record.amount) == user_cart.final_price):
+        completing_order(user_cart.id, tracking_code)
+        return render(request, "payment/success.html", context)
+
+    else:
+        delete_order(tracking_code)
+        return render(request, "payment/failed.html", context)

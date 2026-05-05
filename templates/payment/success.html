@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پرداخت موفق</title>
+    <link rel="stylesheet" href="{% static 'css/payment_success-ui.css' %}">
+
+</head>
+<body>
+    <div class="card">
+        <div class="icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <h1>پرداخت با موفقیت انجام شد</h1>
+        <p>سفارش شما با موفقیت ثبت شد و در حال پردازش می‌باشد. از خرید شما سپاسگزاریم.</p>
+        
+        <div class="tracking-box">
+            کد پیگیری تراکنش: <span dir="ltr">{{ tracking_code }}</span>
+        </div>
+
+        <a href="{{ frontend_return_url }}" class="btn">بازگشت به سایت</a>
+
+        <p class="timer-text">
+            در حال انتقال خودکار به سایت تا <span id="timer" style="color: #4b5563; font-weight: bold;">10</span> ثانیه دیگر...
+        </p>
+
+    </div>
+    <script>
+        window.returnUrl = "{{ frontend_return_url }}";
+    </script>
+    <script src="{% static 'js/payment-ui.js' %}"></script>
+</body>
+</html>

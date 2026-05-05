@@ -1,13 +1,11 @@
 from django.urls import path
-from .views import PaymentViewSet
+from .views import PaymentViewSet, callback_gateway_view
 from rest_framework.routers import DefaultRouter
 
 app_name = 'payments'
 
 urlpatterns = [
-    # path('go-to-gateways/', go_to_gateway_view, name='gateway-view'),
-    # path('callback-gateway/', callback_gateway_view, name='callback-gateway'),
-    # path('verify-gateway/', verify_payment_view, name='verify-gateway'),
+    path('callback-gateway/', callback_gateway_view, name='callback-gateway'),
 ]
 
 router = DefaultRouter()

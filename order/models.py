@@ -92,7 +92,11 @@ class Cart(AuditableModel, SoftDeleteModel):
         
             
         return item_discount
-        
+
+    @property
+    def final_price(self):
+        return self.discounted_price + (self.delivery_type.cost if self.delivery_type else 0)
+    
     
     def __str__(self):
         return (
@@ -147,10 +151,10 @@ class CartItem(AuditableModel, SoftDeleteModel):
 
 class Order(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (
-        ("pending", "در انتظار بررسی"),
-        ("doing", "در حال آماده سازی"),
+        ("pending_pay", "در انتظار پرداخت"),
+        ("doing", "در حال آماده سازی"),# Paid!
         ("send", "ارسال شده"),
-        ("delivered", "تحویل داده شده"),
+        ("completing", "تکمیل شده"),
         ("canceled", "لغو شده"),
     )
     # user/author = created_by
@@ -158,7 +162,7 @@ class Order(AuditableModel, SoftDeleteModel):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICE,
-        default="pending",
+        default="pending_pay",
         verbose_name="وضعیت سفارش",
     )
     
