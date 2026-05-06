@@ -43,7 +43,18 @@ class PaymentViewSet(viewsets.ViewSet):
 
         user = self.request.user
 
-        user_cart = user.created_cart_set
+        try:
+            user_cart = user.created_cart_set
+            
+        except:
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Cart is empty",
+                },
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+        
         cart_discount_code = user_cart.discount_code
         if cart_discount_code is not None and not cart_discount_code.code_validation():
             cart_discount_code = None
