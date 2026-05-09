@@ -55,7 +55,7 @@ class ProductCommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductComment
-        fields = ["id", "created_by", "text", "is_approved", "replies"]
+        fields = ["id", "created_by","created_at","text", "replies"]
 
     def get_replies(self, obj):
         if obj.replies.exists():

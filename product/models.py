@@ -1,10 +1,9 @@
-import os
-import uuid
 from django.db import models
 from django.utils.text import slugify
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from colorfield.fields import ColorField
+from django_ckeditor_5 import fields as ckeditor_fields
 # Create your models here.
 
 
@@ -77,10 +76,10 @@ class Product(AuditableModel, SoftDeleteModel):
         related_name="products",
         verbose_name="برند محصول",
     )
-    specifications = models.TextField(
+    specifications = ckeditor_fields.CKEditor5Field(
         blank=True, null=True, verbose_name="مشخصات محصول"
     )
-    description = models.TextField(
+    description = ckeditor_fields.CKEditor5Field(
         blank=True, null=True, verbose_name="توضیحات/معرفی محصول"
     )
     fixed_price = models.PositiveBigIntegerField(
