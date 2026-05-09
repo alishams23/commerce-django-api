@@ -451,7 +451,7 @@ class ProfileViewSet(viewsets.ViewSet):
         return Response(
             ProductListInterestsSerializer(
                 Pagination10().paginate_queryset(
-                    self.request.user.interests.all(), request
+                    self.request.user.interests.order_by('-created_at'), request
                 ),
                 many=True,
             ).data
@@ -515,7 +515,7 @@ class ProfileViewSet(viewsets.ViewSet):
         return Response(
             ProductCommentUserSerializer(
                 Pagination10().paginate_queryset(
-                    self.request.user.created_productcomment_set.all().select_related(
+                    self.request.user.created_productcomment_set.order_by('-created_at').select_related(
                         "product"
                     ),
                     request,
@@ -542,7 +542,7 @@ class ProfileViewSet(viewsets.ViewSet):
         return Response(
             OrderListUserSerializer(
                 Pagination10().paginate_queryset(
-                    self.request.user.created_order_set.all(), request
+                    self.request.user.created_order_set.order_by('-created_at'), request
                 ),
                 many=True,
             ).data

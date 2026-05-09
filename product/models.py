@@ -187,7 +187,7 @@ class ProductImage(AuditableModel, SoftDeleteModel):
     is_cover = models.BooleanField(
         default=False,
         verbose_name="عکس کاور",
-        help_text="انتخاب این عکس به عنوان عکس پیش نمایش محصول داخل لیست محصولات",db_index=True
+        help_text="انتخاب این عکس به عنوان عکس پیش نمایش محصول داخل لیست دیدگاه ها،علاقه مندی های کاربر وهرجایی که این محصول داخل یک لیستی قرار میگیرد.",db_index=True
     )
 
     def __str__(self):
@@ -227,6 +227,7 @@ class ProductComment(AuditableModel, SoftDeleteModel):
         return f"محصول {self.product.name} - {self.pk}"
 
     class Meta:
+        ordering = ("-created_at",)
         verbose_name = "نظر محصول"
         verbose_name_plural = "نظرات محصولات"
 
