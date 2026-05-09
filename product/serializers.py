@@ -134,7 +134,6 @@ class ProductListInterestsSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
-    comments = serializers.SerializerMethodField()
     user_interest = serializers.SerializerMethodField()
     class Meta:
         model = Product
@@ -151,11 +150,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "specifications",
             "description",
             "colors",
-            "comments",
         ]
-
-    def get_comments(self,obj):
-        return ProductCommentSerializer(obj.comments.filter(reply__isnull = True),many = True).data
     
     def get_user_interest(self,obj):
         user = self.context.get("request").user 

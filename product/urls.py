@@ -1,5 +1,7 @@
-from django.urls import path, re_path
-from .views import AddCommentProductView, BrandListView, CategoryListView, ColorListView, GalleryView, ProductDetailView, ProductsListView
+from django.urls import path
+from .views import AddCommentProductView, BrandListView, CategoryListView, ColorListView, GalleryView, ProductDetailViewSet, ProductsListView
+from rest_framework.routers import DefaultRouter
+
 
 urlpatterns = [
     # ------------------- Home/Index -------------------
@@ -10,6 +12,9 @@ urlpatterns = [
     path('gallery/',GalleryView.as_view(),name = "gallery"),
     
     # ------------------- Detail -------------------
-    re_path(r'^detail/(?P<slug>[^/]+)/$',ProductDetailView.as_view(),name = "product-detail"),
     path('add-comment/',AddCommentProductView.as_view(),name = "add-comment"),
 ]
+
+router = DefaultRouter()
+router.register('detail', ProductDetailViewSet, basename="product-detail")
+urlpatterns += router.urls
