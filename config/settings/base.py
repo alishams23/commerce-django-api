@@ -23,6 +23,7 @@ PROJECT_NAME_APPS = [
     "product",
     "user",
     "order",
+    "helpdesk",
     "payments",
 ]
 
