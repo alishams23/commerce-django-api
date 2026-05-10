@@ -8,7 +8,6 @@ from product.models import (
     Category,
     CategoryChildren,
     Color,
-    Gallery,
     Product,
     ProductComment,
 )
@@ -20,7 +19,6 @@ from product.serializers import (
     BrandSerializer,
     CategoryListSerializer,
     ColorSerializer,
-    GallerySerializer,
     ProductDetailSerializer,
     ProductListSerializer,
 )
@@ -166,20 +164,7 @@ class ColorListView(generics.ListAPIView):
     queryset = Color.objects.filter(is_deleted=False).only("id", "name", "code")
 
 
-@extend_schema(
-    summary="Gallery",
-    description="""
-        Returns list of Images.
-        Used for Gallery.
-    """,
-    tags=["Home"],
-)
-class GalleryView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = GallerySerializer
-    queryset = Gallery.objects.filter(is_published=True, is_deleted=False).only(
-        "id", "image", "order"
-    )
+
 
 
 @extend_schema(

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Category, CategoryChildren, Brand, Color, Gallery, Product, ProductColor, ProductImage, ProductComment
+from .models import Category, CategoryChildren, Brand, Color, Product, ProductColor, ProductImage, ProductComment
 # ------------------- Inlines -------------------
 class CategoryChildrenInline(admin.TabularInline):
     model = CategoryChildren
@@ -115,13 +115,3 @@ class ProductCommentAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return ProductComment.all_objects.all()
-
-
-# ------------------- Gallery -------------------
-
-@admin.register(Gallery)
-
-class GalleryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'image','order','created_at', 'updated_at','is_deleted')
-    list_editable = ('order','is_deleted')
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')

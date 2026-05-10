@@ -5,7 +5,6 @@ from product.models import (
     Category,
     CategoryChildren,
     Color,
-    Gallery,
     Product,
     ProductColor,
     ProductComment,
@@ -175,11 +174,3 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "order", "children"]
-
-# <------------ Gallery ---------------->
-
-class GallerySerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Gallery
-        fields = ['id','order','image']

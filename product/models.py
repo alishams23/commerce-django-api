@@ -230,16 +230,3 @@ class ProductComment(AuditableModel, SoftDeleteModel):
         verbose_name = "نظر محصول"
         verbose_name_plural = "نظرات محصولات"
 
-class Gallery(AuditableModel,SoftDeleteModel):
-    image = models.ImageField(upload_to = "home/images/gallery/",verbose_name = "عکس")
-    order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش عکس")
-    is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار عکس",db_index=True)
-    
-    def __str__(self):
-        return f"عکس گالری {self.id} - {self.image}"
-    
-    class Meta:
-        verbose_name = "عکس گالری"
-        verbose_name_plural = "گالری / عکس های گالری"
-        ordering = ("order","-created_at")
-        
