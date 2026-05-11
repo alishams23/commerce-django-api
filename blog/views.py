@@ -154,14 +154,14 @@ class AddCommentBlogView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        product = get_object_or_404(Blog, id=serializer.validated_data["blog_id"])
+        blog = get_object_or_404(Blog, id=serializer.validated_data["blog_id"])
         reply = serializer.validated_data.get("comment_id")
 
         if reply:
-            reply = BlogComment.objects.filter(id=reply, product=product).first()
+            reply = BlogComment.objects.filter(id=reply, blog=blog).first()
 
         BlogComment.objects.create(
-            product=product,
+            blog=blog,
             created_by=self.request.user,
             text=serializer.validated_data["text"],
             reply=reply,
