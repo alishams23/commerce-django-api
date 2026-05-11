@@ -106,6 +106,7 @@ class ProductColorSerializer(serializers.ModelSerializer):
 # <------------ Product List ---------------->
 
 class ProductListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source = "public_id")
     colors = ProductColorSerializer(many = True)
     class Meta:
         model = Product
@@ -131,6 +132,7 @@ class ProductListInterestsSerializer(serializers.ModelSerializer):
 
 # <------------ Product Detail ---------------->
 class ProductDetailSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source = "public_id")
     brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
     user_interest = serializers.SerializerMethodField()

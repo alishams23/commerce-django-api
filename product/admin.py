@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+
+from product.utils import decode_product_id
 from .models import Category, CategoryChildren, Brand, Color, Product, ProductColor, ProductImage, ProductComment
 # ------------------- Inlines -------------------
 class CategoryChildrenInline(admin.TabularInline):
@@ -59,7 +61,7 @@ class BrandAdmin(admin.ModelAdmin):
 # ------------------- Product -------------------
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite', 'created_at', 'updated_at','is_deleted')
+    list_display = ('public_id', 'name', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite', 'created_at', 'updated_at','is_deleted')
     prepopulated_fields = {"slug":("name",)}
     list_editable = ('is_published', 'is_favorite','is_deleted')
     list_filter = ('category', 'brand', 'is_published', 'is_favorite')
@@ -68,7 +70,19 @@ class ProductAdmin(admin.ModelAdmin):
     # readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     inlines = [ProductColorInline]
     exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'is_deleted')
+    
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term
+        )
 
+        try:
+            real_id = decode_product_id(int(search_term))
+            queryset |= self.model.objects.filter(id=real_id)
+        except:
+            pass
+
+        return queryset, use_distinct
 
 # ------------------- Color -------------------
 @admin.register(Color)

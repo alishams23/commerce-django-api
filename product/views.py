@@ -25,7 +25,7 @@ from product.serializers import (
 from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProductFilter
-
+from product.utils import decode_product_id
 
 @extend_schema(
     summary="List Categories",
@@ -70,7 +70,7 @@ class ProductsListView(generics.ListAPIView):
         Product.objects.filter(is_published=True, is_deleted=False)
         .prefetch_related("colors__images", "colors__color")
         .annotate(rating=Count("interested_users", distinct=True))
-        .distinct()
+        .distinct().order_by('-created_at')
     )
 
     filterset_class = ProductFilter
@@ -183,8 +183,8 @@ class AddCommentProductView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        product = get_object_or_404(Product, id=serializer.validated_data["product_id"])
+        product_id = decode_product_id(serializer.validated_data["product_id"])
+        product = get_object_or_404(Product, id=product_id)
         reply = serializer.validated_data.get("comment_id")
 
         if reply:
