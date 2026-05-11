@@ -4,6 +4,8 @@ from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from colorfield.fields import ColorField
 from django_ckeditor_5 import fields as ckeditor_fields
+
+from product.utils import encode_product_id
 # Create your models here.
 
 
@@ -93,6 +95,11 @@ class Product(AuditableModel, SoftDeleteModel):
     )
     is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار محصول",db_index=True)
     is_favorite = models.BooleanField(default=False, verbose_name="وضعیت محبوبیت")
+
+
+    @property
+    def public_id(self):
+        return encode_product_id(self.id)
 
     def __str__(self):
         return f"{self.name}"
