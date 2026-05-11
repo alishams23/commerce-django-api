@@ -1,10 +1,10 @@
 from rest_framework import serializers
+from order.models import CartItem
 from product.models import (
     Brand,
     Category,
     CategoryChildren,
     Color,
-    Gallery,
     Product,
     ProductColor,
     ProductComment,
@@ -54,7 +54,7 @@ class ProductCommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductComment
-        fields = ["id", "created_by", "text", "is_approved", "replies"]
+        fields = ["id", "created_by","created_at","text", "replies"]
 
     def get_replies(self, obj):
         if obj.replies.exists():
@@ -77,10 +77,32 @@ class ImageProductSerializer(serializers.ModelSerializer):
 class ProductColorSerializer(serializers.ModelSerializer):
     images = ImageProductSerializer(many=True)
     color = ColorSerializer()
+    cart_details = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductColor
-        fields = ["id", "color", "price","discounted_price", "stock", "images"]
+        fields = ["id", "color", "price","discounted_price", "stock", "cart_details", "images"]
 
+    def get_cart_details(self,obj):
+        user = self.context.get("request").user
+        
+        if user.is_authenticated:
+
+            item = CartItem.objects.filter(
+                cart = user.created_cart_set,
+                created_by=user,
+                product_color=obj
+            ).first()
+
+            if item:
+                return {
+                    "item_id": item.id, 
+                    "count": item.count 
+                }
+                  
+        return None
+        
+    
 # <------------ Product List ---------------->
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -92,10 +114,17 @@ class ProductListSerializer(serializers.ModelSerializer):
 # <------------ Product List Interests ---------------->
 class ProductListInterestsSerializer(serializers.ModelSerializer):
     stock = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     class Meta:
         model = Product
-        fields = ["id", "name","slug","fixed_price","discount_percentage","stock"]
-        
+        fields = ["id", "name","slug","fixed_price","discount_percentage","stock",'image']
+    
+    def get_image(self,obj):
+        product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True,order = 0).first()
+        if not product_image:
+            return None
+        return self.context.get("request").build_absolute_uri(product_image.image.url)
+    
     def get_stock(self,obj):
         aggregate = obj.colors.aggregate(total_stock = Sum('stock'))
         return aggregate['total_stock'] or 0
@@ -104,7 +133,6 @@ class ProductListInterestsSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
-    comments = ProductCommentSerializer(many=True)
     user_interest = serializers.SerializerMethodField()
     class Meta:
         model = Product
@@ -121,9 +149,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "specifications",
             "description",
             "colors",
-            "comments",
         ]
-
+    
     def get_user_interest(self,obj):
         user = self.context.get("request").user 
         if user.is_authenticated:
@@ -147,11 +174,3 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "order", "children"]
-
-# <------------ Gallery ---------------->
-
-class GallerySerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Gallery
-        fields = ['id','order','image']

@@ -1,10 +1,9 @@
-import os
-import uuid
 from django.db import models
 from django.utils.text import slugify
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from colorfield.fields import ColorField
+from django_ckeditor_5 import fields as ckeditor_fields
 # Create your models here.
 
 
@@ -77,10 +76,10 @@ class Product(AuditableModel, SoftDeleteModel):
         related_name="products",
         verbose_name="برند محصول",
     )
-    specifications = models.TextField(
+    specifications = ckeditor_fields.CKEditor5Field(
         blank=True, null=True, verbose_name="مشخصات محصول"
     )
-    description = models.TextField(
+    description = ckeditor_fields.CKEditor5Field(
         blank=True, null=True, verbose_name="توضیحات/معرفی محصول"
     )
     fixed_price = models.PositiveBigIntegerField(
@@ -187,7 +186,7 @@ class ProductImage(AuditableModel, SoftDeleteModel):
     is_cover = models.BooleanField(
         default=False,
         verbose_name="عکس کاور",
-        help_text="انتخاب این عکس به عنوان عکس پیش نمایش محصول داخل لیست محصولات",db_index=True
+        help_text="انتخاب این عکس به عنوان عکس پیش نمایش محصول داخل لیست دیدگاه ها،علاقه مندی های کاربر وهرجایی که این محصول داخل یک لیستی قرار میگیرد.",db_index=True
     )
 
     def __str__(self):
@@ -227,19 +226,7 @@ class ProductComment(AuditableModel, SoftDeleteModel):
         return f"محصول {self.product.name} - {self.pk}"
 
     class Meta:
+        ordering = ("-created_at",)
         verbose_name = "نظر محصول"
         verbose_name_plural = "نظرات محصولات"
 
-class Gallery(AuditableModel,SoftDeleteModel):
-    image = models.ImageField(upload_to = "home/images/gallery/",verbose_name = "عکس")
-    order = models.PositiveIntegerField(default = 0,verbose_name = "ترتیب نمایش عکس")
-    is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار عکس",db_index=True)
-    
-    def __str__(self):
-        return f"عکس گالری {self.id} - {self.image}"
-    
-    class Meta:
-        verbose_name = "عکس گالری"
-        verbose_name_plural = "گالری / عکس های گالری"
-        ordering = ("order","-created_at")
-        

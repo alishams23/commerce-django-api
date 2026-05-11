@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.validators import FileExtensionValidator
+from django.core.exceptions import ValidationError
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from user.models import User
@@ -38,9 +39,13 @@ class Blog(AuditableModel, SoftDeleteModel):
     is_published = models.BooleanField(default = True,verbose_name = "وضعیت انتشار")
     published_at = models.DateTimeField(blank = True,null = True,verbose_name = "تاریخ انتشار")
     likes = models.ManyToManyField(User,blank = True,verbose_name = 'لایک ها',related_name = "liked_blogs")
-    
+
+    def clean(self):
+        if not self.created_by:
+            raise ValidationError("created_by is required")
+
     def save(self,*args,**kwargs):
-        
+        self.clean()
         if not self.slug:
             base_slug = slugify(self.title, allow_unicode=True)
             slug = base_slug

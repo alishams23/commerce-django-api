@@ -157,6 +157,7 @@ class CartViewSet(viewsets.ViewSet):
             {
                 "result": "Item increase from cart",
                 "item_id": item.id,
+                "item_count": item.count,
                 "remaining_stock": product_color.stock - item.count,
             },
             status=status.HTTP_200_OK,
@@ -201,7 +202,7 @@ class CartViewSet(viewsets.ViewSet):
             )
 
         return Response(
-            {"result": "Item decrease from cart"}, status=status.HTTP_200_OK
+            {"result": "Item decrease from cart","item_count": item.count}, status=status.HTTP_200_OK
         )
 
     @extend_schema(

@@ -44,7 +44,7 @@ class DepartmentListView(generics.ListAPIView):
 )
 class TicketViewSet(viewsets.ModelViewSet):
     lookup_field = "ticket_number"
-
+    http_method_names = ["get", "post"]
     def get_queryset(self):
 
         user = self.request.user

@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/user/', include("user.urls")),
     path("api/payments/", include("payments.urls")),
     path("api/helpdesk/", include("helpdesk.urls")),
+    path("api/promotions/", include("promotions.urls")),
     path("api/bankgateways/", az_bank_gateways_urls()),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
 ]
