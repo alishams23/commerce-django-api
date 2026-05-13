@@ -21,16 +21,12 @@ from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 
 @extend_schema(
     summary="Retrieve a list of active and non-deleted blog categories",
-    
     description="""
         Returns a list of active, non-deleted blog categories, sorted by 'order' and 'created_at'. 
         Accessible to all user.
         """,
     tags=["Blog"],
 )
-
-
-
 class CategoryBlogListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = CategoryBlogSerializer
@@ -52,12 +48,13 @@ class CategoryBlogListView(generics.ListAPIView):
     """,
     tags=["Blog"],
 )
-
 class BlogListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = BlogListSerializer
     pagination_class = SearchPagination
-    queryset = Blog.objects.select_related("category").filter(is_published=True, is_deleted=False,category__is_active = True)
+    queryset = Blog.objects.select_related("category").filter(
+        is_published=True, is_deleted=False, category__is_active=True
+    )
 
     filterset_class = BlogFilter
 
@@ -70,6 +67,7 @@ class BlogListView(generics.ListAPIView):
         "text_body",
     ]
 
+
 @extend_schema(
     summary="Retrieve Blog Details",
     description="""
@@ -77,32 +75,36 @@ class BlogListView(generics.ListAPIView):
     """,
     tags=["Blog"],
 )
-
 class BlogDetailViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     serializer_class = BlogDetailSerializer
     lookup_field = "slug"
-    queryset = Blog.objects.filter(is_published=True, is_deleted=False).prefetch_related('comments')
+    queryset = Blog.objects.filter(
+        is_published=True, is_deleted=False
+    ).prefetch_related("comments")
     pagination_class = SearchPagination
-    
+
     @extend_schema(
         summary="Retrieve Comments for Blog Post",
         description="""
             Returns a paginated list of comments for a specific blog post
         """,
-        responses = BlogCommentSerializer,
+        responses=BlogCommentSerializer,
         tags=["Blog"],
     )
     @action(detail=True, methods=["GET"])
     def comments(self, request, slug):
         return self.get_paginated_response(
             BlogCommentSerializer(
-                self.paginate_queryset(self.get_object().comments.all().order_by('-created_at')),
+                self.paginate_queryset(
+                    self.get_object()
+                    .comments.filter(reply__isnull=True)
+                    .order_by("-created_at")
+                ),
                 many=True,
                 context={"request": request},
             ).data
         )
-
 
 
 @extend_schema(
@@ -121,7 +123,6 @@ class BlogDetailViewSet(viewsets.ReadOnlyModelViewSet):
     ],
     tags=["Blog"],
 )
-
 class BlogLikeViewSet(viewsets.ViewSet):
     lookup_field = "id"
 
@@ -133,9 +134,8 @@ class BlogLikeViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["Delete"])
     def remove(self, request, id):
         self.request.user.liked_blogs.remove(get_object_or_404(Blog, id=id))
-        return Response(
-            {"status": "Success", "Message": "Blog Removed To liked."}
-        )
+        return Response({"status": "Success", "Message": "Blog Removed To liked."})
+
 
 @extend_schema(
     summary="Add Comment to Blog ",
@@ -147,25 +147,27 @@ class BlogLikeViewSet(viewsets.ViewSet):
     """,
     tags=["Blog"],
 )
-
 class AddCommentBlogView(generics.CreateAPIView):
     serializer_class = BlogAddCommentSerializer
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        product = get_object_or_404(Blog, id=serializer.validated_data['blog_id'])
-        reply = serializer.validated_data.get('comment_id')
-        
+
+        blog = get_object_or_404(Blog, id=serializer.validated_data["blog_id"])
+        reply = serializer.validated_data.get("comment_id")
+
         if reply:
-            reply = BlogComment.objects.filter(id=reply,product = product).first()
-        
+            reply = BlogComment.objects.filter(id=reply, blog=blog).first()
+
         BlogComment.objects.create(
-            product=product,
+            blog=blog,
             created_by=self.request.user,
-            text=serializer.validated_data['text'],
-            reply=reply
+            text=serializer.validated_data["text"],
+            reply=reply,
         )
-        
-        return Response({"status":"Success","message":"Add Comment Successfully"},status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"status": "Success", "message": "Add Comment Successfully"},
+            status=status.HTTP_201_CREATED,
+        )

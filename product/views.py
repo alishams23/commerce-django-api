@@ -1,23 +1,31 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, filters,status
+from rest_framework import generics, filters, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from product.models import Brand, Category, CategoryChildren, Color, Gallery, Product, ProductComment
+from product.models import (
+    Brand,
+    Category,
+    CategoryChildren,
+    Color,
+    Product,
+    ProductComment,
+)
 from django.db.models import Count, Prefetch
 from product.pagination import SearchPagination
 from product.serializers import (
     ProductAddCommentSerializer,
+    ProductCommentSerializer,
     BrandSerializer,
     CategoryListSerializer,
     ColorSerializer,
-    GallerySerializer,
     ProductDetailSerializer,
     ProductListSerializer,
 )
 from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProductFilter
-
+from product.utils import decode_product_id
 
 @extend_schema(
     summary="List Categories",
@@ -33,7 +41,7 @@ class CategoryListView(generics.ListAPIView):
 
     def get_queryset(self):
         children_qs = CategoryChildren.objects.filter(
-            is_active=True,show_in_menu = True,is_deleted=False
+            is_active=True, show_in_menu=True, is_deleted=False
         ).order_by("order", "created_at")
         return (
             Category.objects.filter(is_active=True, is_deleted=False)
@@ -62,9 +70,9 @@ class ProductsListView(generics.ListAPIView):
         Product.objects.filter(is_published=True, is_deleted=False)
         .prefetch_related("colors__images", "colors__color")
         .annotate(rating=Count("interested_users", distinct=True))
-        .distinct()
+        .distinct().order_by('-created_at')
     )
-    
+
     filterset_class = ProductFilter
 
     filter_backends = [
@@ -85,8 +93,6 @@ class ProductsListView(generics.ListAPIView):
     ]
 
 
-
-
 @extend_schema(
     summary="Retrieve Product",
     description="""
@@ -95,15 +101,39 @@ class ProductsListView(generics.ListAPIView):
     """,
     tags=["Product"],
 )
-class ProductDetailView(generics.RetrieveAPIView):
+class ProductDetailViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     serializer_class = ProductDetailSerializer
     lookup_field = "slug"
+    pagination_class = SearchPagination
+
     queryset = (
         Product.objects.filter(is_published=True, is_deleted=False)
-        .prefetch_related("colors", "colors__images", "comments")
+        .prefetch_related("colors", "colors__images")
         .select_related("brand")
     )
+    @extend_schema(
+        summary="Retrieve Comments for a Product",
+        description="""
+            Returns a paginated list of top-level comments for a specific product.
+            Replies are nested within each parent comment.
+        """,
+        responses=ProductCommentSerializer,
+        tags=["Product"],
+    )
+    @action(detail=True, methods=["get"], url_path="comments")
+    def product_comments(self, request, slug=None):
+        return self.get_paginated_response(
+            ProductCommentSerializer(
+                self.paginate_queryset(
+                    self.get_object()
+                    .comments.filter(reply__isnull=True)
+                    .order_by("-created_at")
+                ),
+                many=True,
+                context={"request": request},
+            ).data
+        )
 
 
 @extend_schema(
@@ -117,7 +147,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 class BrandListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = BrandSerializer
-    queryset = Brand.objects.filter(is_deleted = False).only('id','name')
+    queryset = Brand.objects.filter(is_deleted=False).only("id", "name")
 
 
 @extend_schema(
@@ -131,22 +161,12 @@ class BrandListView(generics.ListAPIView):
 class ColorListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ColorSerializer
-    queryset = Color.objects.filter(is_deleted = False).only('id','name','code')
+    queryset = Color.objects.filter(is_deleted=False).only("id", "name", "code")
 
-@extend_schema(
-    summary="Gallery",
-    description="""
-        Returns list of Images.
-        Used for Gallery.
-    """,
-    tags=["Home"],
-)
 
-class GalleryView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = GallerySerializer
-    queryset = Gallery.objects.filter(is_published = True,is_deleted = False).only('id','image','order')
-    
+
+
+
 @extend_schema(
     summary="Add Comment to Product ",
     description="""
@@ -156,25 +176,28 @@ class GalleryView(generics.ListAPIView):
         - Requires user authentication.
     """,
     tags=["Product"],
-)   
+)
 class AddCommentProductView(generics.CreateAPIView):
     serializer_class = ProductAddCommentSerializer
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        product = get_object_or_404(Product, id=serializer.validated_data['product_id'])
-        reply = serializer.validated_data.get('comment_id')
-        
+        product_id = decode_product_id(serializer.validated_data["product_id"])
+        product = get_object_or_404(Product, id=product_id)
+        reply = serializer.validated_data.get("comment_id")
+
         if reply:
-            reply = ProductComment.objects.filter(id=reply,product = product).first()
-        
+            reply = ProductComment.objects.filter(id=reply, product=product).first()
+
         ProductComment.objects.create(
             product=product,
             created_by=self.request.user,
-            text=serializer.validated_data['text'],
-            reply=reply
+            text=serializer.validated_data["text"],
+            reply=reply,
         )
-        
-        return Response({"status":"Success","message":"Add Comment Successfully"},status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"status": "Success", "message": "Add Comment Successfully"},
+            status=status.HTTP_201_CREATED,
+        )

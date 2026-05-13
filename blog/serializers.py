@@ -15,18 +15,19 @@ class CategoryBlogSerializer(serializers.ModelSerializer):
         return obj.blogs.count()
 
 class BlogListSerializer(serializers.ModelSerializer):
-    category = CategoryBlogSerializer()
+    category = serializers.CharField(source = "category.name")
     class Meta:
         model = Blog
         fields = ['category','title','slug','published_at','reading_time','cover']
 
 
 class BlogDetailSerializer(serializers.ModelSerializer):
+    created_by = serializers.CharField(source = "created_by.get_full_name")
     user_liked = serializers.SerializerMethodField()
     liked_count = serializers.SerializerMethodField()
     class Meta:
         model = Blog
-        fields = ['slug','cover','published_at','reading_time','created_by','user_liked','liked_count','title','text_body']
+        fields = ['id','cover','published_at','reading_time','created_by','user_liked','liked_count','title','text_body']
     
     def get_user_liked(self,obj):
         user = self.context.get("request").user 
@@ -43,7 +44,7 @@ class BlogCommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BlogComment
-        fields = ["id", "created_by", "text", "is_approved", "replies"]
+        fields = ["id", "created_by", "created_at" ,"text", "replies"]
 
     def get_replies(self, obj):
         if obj.replies.exists():
