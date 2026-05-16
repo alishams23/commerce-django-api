@@ -16,13 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from django.conf.urls.i18n import i18n_patterns
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from django.conf import settings
 from django.conf.urls.static import static
 from azbankgateways.urls import az_bank_gateways_urls
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+
+    # language switcher
+    path("i18n/", include("django.conf.urls.i18n")),
+
+    # api urls
     path('api/blog/', include("blog.urls")),
     path('api/order/', include("order.urls")),
     path('api/product/', include("product.urls")),
@@ -31,8 +36,15 @@ urlpatterns = [
     path("api/helpdesk/", include("helpdesk.urls")),
     path("api/promotions/", include("promotions.urls")),
     path("api/bankgateways/", az_bank_gateways_urls()),
+
+    # ckeditor
     path('ckeditor5/', include('django_ckeditor_5.urls')),
 ]
+
+# only admin/site pages should be translated
+urlpatterns += i18n_patterns(
+    path('admin/', admin.site.urls),
+)
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -33,7 +33,7 @@ class ColorSerializer(serializers.ModelSerializer):
 class CategoryChildrenListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryChildren
-        fields = ["id", "name", "order"]
+        fields = ["id", "name", "order","show_in_menu","icon"]
 
 
 class CategoryListSerializer(serializers.ModelSerializer):
