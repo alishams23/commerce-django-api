@@ -3,16 +3,15 @@ from django.utils import timezone
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 
 from product.models import Product
 
 
 class Banner(AuditableModel, SoftDeleteModel):
     POSITION_CHOICES = (
-        ("wide_single", _("Middle Wide Banner (max 1)")),
-        ("middle_half", _("Middle Half Banners (max 2)")),
-        ("side_grid_four", _("Side Column Banners (max 4)")),
+        ("wide_single", "بنر عریض میانی (حداکثر ۱ عدد)"),
+        ("middle_half", "بنرهای وسط صفحه (حداکثر ۲ عدد)"),
+        ("side_grid_four", "بنر ستون کناری (حداکثر ۴ عدد)"),
     )
 
     MAX_ACTIVE_LIMITS = {
@@ -20,41 +19,19 @@ class Banner(AuditableModel, SoftDeleteModel):
         "middle_half": 2,
         "side_grid_four": 4,
     }
-
-    title = models.CharField(
-        max_length=100,
-        verbose_name=_("Banner Title")
-    )
-
+    title = models.CharField(max_length=100, verbose_name="عنوان بنر")
     text = models.CharField(
-        max_length=150,
-        blank=True,
-        null=True,
-        verbose_name=_("Short Text")
+        max_length=150, blank=True, null=True, verbose_name="متن کوتاه"
     )
-
-    image = models.ImageField(
-        upload_to="banners/%Y/%m/",
-        verbose_name=_("Banner Image")
-    )
-
+    image = models.ImageField(upload_to="banners/%Y/%m/", verbose_name="تصویر بنر")
     url = models.URLField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name=_("Target URL")
+        max_length=500, blank=True, null=True, verbose_name="لینک مقصد"
     )
-
     position = models.CharField(
-        max_length=50,
-        choices=POSITION_CHOICES,
-        verbose_name=_("Display Position")
+        max_length=50, choices=POSITION_CHOICES, verbose_name="جایگاه نمایش"
     )
+    is_active = models.BooleanField(default=True, verbose_name="فعال/غیرفعال")
 
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name=_("Active / Inactive")
-    )
     def clean(self):
         super().clean()
 
@@ -71,12 +48,7 @@ class Banner(AuditableModel, SoftDeleteModel):
                 if active_count >= limit:
                     raise ValidationError(
                         {
-                            "is_active": _(
-                                'Capacity is full. You cannot have more than %(limit)s active banners for "%(position)s". Please deactivate one of the existing banners first.'
-                            ) % {
-                                "limit": limit,
-                                "position": self.get_position_display(),
-                            }
+                            "is_active": f'ظرفیت پر است! شما نمی‌توانید بیشتر از {limit} بنر فعال برای جایگاه "{self.get_position_display()}" داشته باشید. لطفاً ابتدا یکی از بنرهای قبلی را غیرفعال کنید.'
                         }
                     )
 
@@ -85,8 +57,8 @@ class Banner(AuditableModel, SoftDeleteModel):
         super().save(*args, **kwargs)
 
     class Meta:
-        verbose_name = _("Banner")
-        verbose_name_plural = _("Banners")
+        verbose_name = "بنر"
+        verbose_name_plural = "بنرها"
         ordering = ["-created_at"]
 
     def __str__(self):
@@ -95,33 +67,19 @@ class Banner(AuditableModel, SoftDeleteModel):
 
 class Campaign(AuditableModel, SoftDeleteModel):
     title = models.CharField(
-        max_length=200,
-        verbose_name=_("Campaign Title"),
-        help_text=_("Example: Amazing Offer")
+        max_length=200, verbose_name="عنوان کمپین",help_text = "(مثل پیشنهاد شگفت‌انگیز)"
     )
-
-    start_time = models.DateTimeField(
-        verbose_name=_("Start Time")
-    )
-
-    end_time = models.DateTimeField(
-        verbose_name=_("End Time")
-    )
-
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name=_("Active / Inactive")
-    )
+    start_time = models.DateTimeField(verbose_name="زمان شروع")
+    end_time = models.DateTimeField(verbose_name="زمان پایان")
+    is_active = models.BooleanField(default=True, verbose_name="فعال/غیرفعال")
 
     products = models.ManyToManyField(
-        Product,
-        related_name="campaigns",
-        verbose_name=_("Campaign Products")
+        Product, related_name="campaigns", verbose_name="محصولات کمپین"
     )
 
     class Meta:
-        verbose_name = _("Sales Campaign")
-        verbose_name_plural = _("Sales Campaigns")
+        verbose_name = "کمپین فروش ویژه"
+        verbose_name_plural = "کمپین‌های فروش ویژه"
 
     def __str__(self):
         return self.title
@@ -132,26 +90,16 @@ class Campaign(AuditableModel, SoftDeleteModel):
 
 
 class Gallery(AuditableModel, SoftDeleteModel):
-    image = models.ImageField(
-        upload_to="home/images/gallery/",
-        verbose_name=_("Image")
-    )
-
-    order = models.PositiveIntegerField(
-        default=0,
-        verbose_name=_("Display Order")
-    )
-
+    image = models.ImageField(upload_to="home/images/gallery/", verbose_name="عکس")
+    order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش عکس")
     is_published = models.BooleanField(
-        default=True,
-        verbose_name=_("Published"),
-        db_index=True
+        default=True, verbose_name="وضعیت انتشار عکس", db_index=True
     )
 
     def __str__(self):
-        return f"Gallery Image {self.id}"
+        return f"عکس گالری {self.id} - {self.image}"
 
     class Meta:
-        verbose_name = _("Gallery Image")
-        verbose_name_plural = _("Gallery Images")
+        verbose_name = "عکس گالری"
+        verbose_name_plural = "گالری / عکس های گالری"
         ordering = ("order", "-created_at")

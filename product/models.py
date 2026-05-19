@@ -5,30 +5,21 @@ from core.models.soft_delete import SoftDeleteModel
 from colorfield.fields import ColorField
 from django_ckeditor_5 import fields as ckeditor_fields
 
-from django.utils.translation import gettext_lazy as _
-
-
 from product.utils import encode_product_id
 # Create your models here.
 
 
 class Category(AuditableModel, SoftDeleteModel):
-    name = models.CharField(
-        max_length=50, unique=True, verbose_name=_("Parent Category Name")
-    )
-    order = models.PositiveIntegerField(
-        default=0, verbose_name=_("Display Order"), db_index=True
-    )
-    is_active = models.BooleanField(
-        default=True, verbose_name=_("Active / Inactive"), db_index=True
-    )
+    name = models.CharField(max_length=50, unique = True ,verbose_name="نام دسته بندی والد")
+    order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش دسته بندی",db_index=True)
+    is_active = models.BooleanField(default=True, verbose_name="فعال/غیرفعال",db_index=True)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"دسته بندی والد - {self.name}"
 
     class Meta:
-        verbose_name = _("Parent Category")
-        verbose_name_plural = _("Parent Categories")
+        verbose_name = "دسته بندی والد"
+        verbose_name_plural = "دسته بندی های والد"
 
 
 class CategoryChildren(AuditableModel, SoftDeleteModel):
@@ -36,110 +27,75 @@ class CategoryChildren(AuditableModel, SoftDeleteModel):
         Category,
         on_delete=models.PROTECT,
         related_name="children",
-        verbose_name=_("Parent Category"),
+        verbose_name="دسته بندی والد",
     )
-    name = models.CharField(
-        max_length=50, unique=True, verbose_name=_("Child Category Name")
-    )
-    order = models.PositiveIntegerField(
-        default=0, verbose_name=_("Display Order"), db_index=True
-    )
-
+    name = models.CharField(max_length=50,unique = True,verbose_name="نام دسته بندی فرزند")
+    order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش دسته بندی",db_index=True)
     icon = models.ImageField(
         upload_to="products/images/category-children/icon/",
         blank=True,
         null=True,
-        verbose_name=_("Category Icon"),
+        verbose_name="کاور دسته بندی فرزند",
     )
-
-    show_in_menu = models.BooleanField(
-        default=False,
-        verbose_name=_("Show in Menu"),
-        help_text=_(
-            "Enable this option to display this category in the main website category menu."
-        ),
-    )
-
-    is_active = models.BooleanField(
-        default=True, verbose_name=_("Active / Inactive"), db_index=True
-    )
+    show_in_menu = models.BooleanField(default = False,verbose_name = "نمایش در منو",help_text = ".با فعال کردن این گزینه دسته بندی در منوی دسته بندی صفحه اصلی سایت نمایش داده میشود")
+    is_active = models.BooleanField(default=True, verbose_name="فعال/غیرفعال",db_index=True)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"دسته بندی فرزند - {self.name}"
 
     class Meta:
-        verbose_name = _("Child Category")
-        verbose_name_plural = _("Child Categories")
+        verbose_name = "دسته بندی فرزند"
+        verbose_name_plural = "دسته بندی های فرزند"
         indexes = [
             models.Index(fields=["category", "is_active", "is_deleted"]),
         ]
 
 
 class Brand(AuditableModel, SoftDeleteModel):
-    name = models.CharField(max_length=50, unique=True, verbose_name=_("Brand Name"))
+    name = models.CharField(max_length=50,unique = True,verbose_name="نام برند")
 
     def __str__(self):
-        return f"{self.name}"
+        return f"برند {self.id} - {self.name}"
 
     class Meta:
-        verbose_name = _("Brand")
-        verbose_name_plural = _("Brands")
-
+        verbose_name = "برند"
+        verbose_name_plural = "برندها "
 
 class Product(AuditableModel, SoftDeleteModel):
     category = models.ForeignKey(
         CategoryChildren,
         on_delete=models.PROTECT,
         related_name="products",
-        verbose_name=_("Product Category"),
-        db_index=True,
+        verbose_name="دسته بندی محصول",db_index=True
     )
-
-    name = models.CharField(max_length=100, verbose_name=_("Product Name"))
-
-    slug = models.SlugField(
-        max_length=255,
-        unique=True,
-        allow_unicode=True,
-        blank=True,
-        verbose_name=_("Product Slug"),
-    )
-
+    name = models.CharField(max_length=100, verbose_name="نام محصول")
+    slug = models.SlugField(max_length=255, unique=True,allow_unicode=True,blank = True,verbose_name='اسلاگ محصول')
     brand = models.ForeignKey(
         Brand,
         on_delete=models.PROTECT,
         blank=True,
         null=True,
         related_name="products",
-        verbose_name=_("Brand"),
+        verbose_name="برند محصول",
     )
-
     specifications = ckeditor_fields.CKEditor5Field(
-        blank=True, null=True, verbose_name=_("Specifications")
+        blank=True, null=True, verbose_name="مشخصات محصول"
     )
-
     description = ckeditor_fields.CKEditor5Field(
-        blank=True, null=True, verbose_name=_("Product Description")
+        blank=True, null=True, verbose_name="توضیحات/معرفی محصول"
     )
-
     fixed_price = models.PositiveBigIntegerField(
-        default=0,
-        verbose_name=_("Base Price (Toman)"),
-        help_text=_(
-            "If the base price of the product or all of its colors is 0, the product will be considered free."
-        ),
-        db_index=True,
+        default = 0,
+        verbose_name="قیمت ثابت(تومان)",
+        help_text="!اگر قیمت ثابت محصول و یا تمام رنگ های آن 0 باشد محصول رایگان در نظر گرفته میشود",db_index=True
     )
 
-    discount_percentage = models.PositiveIntegerField(
-        default=0, verbose_name=_("Product Discount Percentage")
+    discount_percentage  = models.PositiveIntegerField(
+        default=0, verbose_name="درصد تخفیف ویژه این محصول"
     )
+    is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار محصول",db_index=True)
+    is_favorite = models.BooleanField(default=False, verbose_name="وضعیت محبوبیت")
 
-    is_published = models.BooleanField(
-        default=True, verbose_name=_("Published"), db_index=True
-    )
-
-    is_favorite = models.BooleanField(default=False, verbose_name=_("Featured Product"))
 
     @property
     def public_id(self):
@@ -162,20 +118,19 @@ class Product(AuditableModel, SoftDeleteModel):
 
         super().save(*args, **kwargs)
 
+
     class Meta:
-        verbose_name = _("Product")
-        verbose_name_plural = _("Products")
-        unique_together = ("name", "category")
+        verbose_name = "محصول"
+        verbose_name_plural = "محصولات "
+        unique_together = ('name','category')
         indexes = [
             models.Index(fields=["category", "is_published", "is_deleted"]),
             models.Index(fields=["fixed_price"]),
         ]
 
-
-class Color(AuditableModel, SoftDeleteModel):
-    name = models.CharField(max_length=50, unique=True, verbose_name=_("Color Name"))
-
-    code = ColorField(default="#ffffff", unique=True, verbose_name=_("Color HEX Code"))
+class Color(AuditableModel,SoftDeleteModel):
+    name = models.CharField(max_length=50,unique = True,verbose_name="اسم رنگ")
+    code = ColorField(default = '#ffffff',unique = True,verbose_name="کد رنگ (HEX)")
 
     def __str__(self):
         return f"رنگ {self.name}"
@@ -184,47 +139,19 @@ class Color(AuditableModel, SoftDeleteModel):
         if self.code:
             self.code = self.code.lower()
         super().save(*args, **kwargs)
-
+    
     class Meta:
-        verbose_name = _("Color")
-        verbose_name_plural = _("Colors")
-        unique_together = ("name", "code")
-
+        verbose_name = "رنگ"
+        verbose_name_plural = "رنگ ها "
+        unique_together = ('name','code')
 
 class ProductColor(AuditableModel, SoftDeleteModel):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="colors",
-        verbose_name=_("Product"),
-        db_index=True,
-    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="colors",verbose_name = "محصول",db_index=True)
+    color = models.ForeignKey(Color,on_delete = models.PROTECT,related_name = "products",verbose_name = "رنگ",db_index=True)
+    base_price = models.PositiveBigIntegerField(default = 0, verbose_name="(تومان)قیمت این رنگ از محصول",help_text = ".اگر قیمتی برای این رنگ در نظر گرفته نشود، پیش فرض قیمت پایه محصول روی این رنگ اعمال می شود")
+    base_discount  = models.PositiveIntegerField(default = 0, verbose_name="درصد تخفیف ویژه این رنگ از محصول",help_text = ".اگر تخفیف ویژه برای این رنگ از محصول در نظر گرفته نشود، پیش فرض تخفیف ویژه پایه محصول روی این رنگ اعمال می شود")
+    stock = models.PositiveIntegerField(default=0, verbose_name="موجودی این رنگ از محصول")
 
-    color = models.ForeignKey(
-        Color,
-        on_delete=models.PROTECT,
-        related_name="products",
-        verbose_name=_("Color"),
-        db_index=True,
-    )
-
-    base_price = models.PositiveBigIntegerField(
-        default=0,
-        verbose_name=_("Color Price (Toman)"),
-        help_text=_(
-            "If no price is set for this color, the product base price will be used."
-        ),
-    )
-
-    base_discount = models.PositiveIntegerField(
-        default=0,
-        verbose_name=_("Color Discount Percentage"),
-        help_text=_(
-            "If no discount is set for this color, the product default discount will be applied."
-        ),
-    )
-
-    stock = models.PositiveIntegerField(default=0, verbose_name=_("Stock Quantity"))
 
     @property
     def price(self):
@@ -232,102 +159,81 @@ class ProductColor(AuditableModel, SoftDeleteModel):
 
     @property
     def discount_percentage(self):
-        return (
-            self.base_discount
-            if self.base_discount != 0
-            else self.product.discount_percentage
-        )
-
+        return self.base_discount if self.base_discount != 0 else self.product.discount_percentage
+    
     @property
     def discounted_price(self):
         return self.price - (self.price * self.discount_percentage // 100)
-
+    
     def __str__(self):
         return f"{self.product} - {self.color}"
-
-    def save(self, *args, **kwargs):
+    
+    def save(self,*args,**kwargs):
         product = self.product
         if product.fixed_price == 0 or product.fixed_price > self.price:
             product.fixed_price = self.price
             product.save()
-        super().save(*args, **kwargs)
+        super().save(*args,**kwargs)
+
 
     class Meta:
-        verbose_name = _("Product Color")
-        verbose_name_plural = _("Product Colors")
-        unique_together = ("product", "color")
-
+        verbose_name = "رنگ محصول"
+        verbose_name_plural = "رنگ بندی محصولات"
+        unique_together = ('product','color')
 
 class ProductImage(AuditableModel, SoftDeleteModel):
     product_color = models.ForeignKey(
         ProductColor,
         on_delete=models.CASCADE,
         related_name="images",
-        verbose_name=_("Product Color"),
-        db_index=True,
+        verbose_name="عکس مختص رنگ محصول",db_index=True
     )
-
-    image = models.ImageField(
-        upload_to="products/images/product-color/", verbose_name=_("Product Image")
-    )
-
-    order = models.PositiveIntegerField(
-        default=0, verbose_name=_("Display Order"), db_index=True
-    )
-
+    image = models.ImageField(upload_to="products/images/product-color/")  # def upload
+    order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش عکس",db_index=True)
     is_cover = models.BooleanField(
         default=False,
-        verbose_name=_("Cover Image"),
-        help_text=_(
-            "Use this image as the product preview in lists such as comments, favorites, or product listings."
-        ),
-        db_index=True,
+        verbose_name="عکس کاور",
+        help_text="انتخاب این عکس به عنوان عکس پیش نمایش محصول داخل لیست دیدگاه ها،علاقه مندی های کاربر وهرجایی که این محصول داخل یک لیستی قرار میگیرد.",db_index=True
     )
 
     def __str__(self):
-        return f"{self.product_color}"
+        return f"عکس محصول {self.product_color}"
 
     class Meta:
-        verbose_name = _("Product Image")
-        verbose_name_plural = _("Product Images")
+        verbose_name = "عکس محصول"
+        verbose_name_plural = "عکس های محصولات"
 
 
 class ProductCommentManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_approved=True)
+        return super().get_queryset().filter(is_approved = True)
 
 
 class ProductComment(AuditableModel, SoftDeleteModel):
+    # User = created_by
     product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="comments",
-        verbose_name=_("Product"),
-        db_index=True,
+        Product, on_delete=models.CASCADE, related_name="comments", verbose_name="محصول",db_index=True
     )
-
-    text = models.TextField(verbose_name=_("Comment Text"))
-
+    text = models.TextField(verbose_name="متن نظر")
     reply = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
         blank=True,
         null=True,
         related_name="replies",
-        verbose_name=_("Reply To"),
+        verbose_name="در جواب نظر",
     )
+    is_approved = models.BooleanField(default=True, verbose_name="وضعیت تایید نظر",db_index=True)
 
-    is_approved = models.BooleanField(
-        default=True, verbose_name=_("Approved"), db_index=True
-    )
-    objects = ProductCommentManager()
-
+    objects = ProductCommentManager() 
+    
     all_objects = models.Manager()
-
+    
     def __str__(self):
-        return f"{self.product.name} - {self.pk}"
+        return f"محصول {self.product.name} - {self.pk}"
 
     class Meta:
         ordering = ("-created_at",)
-        verbose_name = _("Product Comment")
-        verbose_name_plural = _("Product Comments")
+        verbose_name = "نظر محصول"
+        verbose_name_plural = "نظرات محصولات"
+
