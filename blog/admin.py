@@ -21,7 +21,7 @@ class BlogCommentInline(admin.TabularInline):
 
 @admin.register(CategoryBlog)
 class CategoryBlogAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
+    list_display = ('name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
     list_editable = ('order','is_active','is_deleted')
     search_fields = ('name',)
     ordering = ('order',)
@@ -29,12 +29,12 @@ class CategoryBlogAdmin(admin.ModelAdmin):
 
 @admin.register(Blog)
 class BlogAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title','reading_time','created_by', 'is_published', 'published_at', 'created_at')
+    list_display = ('title','reading_time','created_by', 'is_published', 'published_at', 'created_at')
     list_filter = ('category','is_published', 'created_by', 'published_at')
     prepopulated_fields = {"slug":("title",)}
     search_fields = ('title', 'created_by__username', 'text_body')
     readonly_fields = ('reading_time','created_at', 'updated_at', 'published_at','deleted_at', 'updated_by')
-    inlines = [BlogMediaInline, BlogCommentInline]
+    inlines = [BlogMediaInline]
     ordering = ('-published_at', '-created_at')
     fieldsets = (
         (None, {
@@ -48,7 +48,7 @@ class BlogAdmin(admin.ModelAdmin):
 
 @admin.register(BlogMedia)
 class BlogMediaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'blog','media_type', 'created_at')
+    list_display = ('blog','media_type', 'created_at')
     list_filter = ('blog',)
     search_fields = ('blog__title',)
     readonly_fields = ('media_type','created_at', 'updated_at','deleted_at', 'created_by', 'updated_by')
@@ -56,7 +56,7 @@ class BlogMediaAdmin(admin.ModelAdmin):
 
 @admin.register(BlogComment)
 class BlogCommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'blog', 'created_by', 'is_approved', 'created_at')
+    list_display = ('blog', 'created_by', 'is_approved', 'created_at')
     list_filter = ('is_approved', 'blog', 'created_by')
     search_fields = ('text', 'created_by__username', 'blog__title')
     readonly_fields = ('created_at', 'updated_at','deleted_at', 'created_by', 'updated_by')
