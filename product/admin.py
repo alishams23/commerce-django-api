@@ -129,8 +129,8 @@ class ColorAdmin(AuditableExcludeAdmin):
 # ------------------- ProductColor -------------------
 @admin.register(ProductColor)
 class ProductColorAdmin(admin.ModelAdmin):
-    list_display = ('product', 'color','price','discount_percentage','stock','is_deleted')
-    list_editable = ('stock','is_deleted')
+    list_display = ('product', 'color','price','discount_percentage','order','stock','is_deleted')
+    list_editable = ('stock','order','is_deleted')
     list_filter = ('product','color')
     search_fields = ('product__name','color__name')
     ordering = ('product','color')
@@ -153,9 +153,10 @@ class ProductColorAdmin(admin.ModelAdmin):
             )
         }),
 
-        ("موجودی و وضعیت", {
+        ("موجودی و ترتیب", {
             "fields": (
                 "stock",
+                "order",
                 "is_deleted",
             ),
             "classes": ("wide",)
