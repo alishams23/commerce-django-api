@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from product.models import Product
 from product.serializers import ProductListInterestsSerializer
+from product.utils import decode_product_id
 from user.models import ContactUs, Notification, NotificationRead, User
 from user.pagination import Pagination10
 from user.serializers import (
@@ -570,12 +571,12 @@ class InterestsViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["POST"])
     def add(self, request, id):
-        self.request.user.interests.add(get_object_or_404(Product, id=id))
+        self.request.user.interests.add(get_object_or_404(Product, id=decode_product_id(id)))
         return Response({"status": "Success", "Message": "Product Add To Interests."})
 
     @action(detail=True, methods=["Delete"])
     def remove(self, request, id):
-        self.request.user.interests.remove(get_object_or_404(Product, id=id))
+        self.request.user.interests.remove(get_object_or_404(Product, id=decode_product_id(id)))
         return Response(
             {"status": "Success", "Message": "Product Removed To Interests."}
         )

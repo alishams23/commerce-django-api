@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
+from core.admins.auditable import AuditableExcludeAdmin
 from product.utils import decode_product_id
 from .models import Category, CategoryChildren, Brand, Color, Product, ProductColor, ProductImage, ProductComment
 # ------------------- Inlines -------------------
@@ -32,44 +33,76 @@ class ProductColorInline(admin.TabularInline):
 
 # ------------------- Category -------------------
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
+class CategoryAdmin(AuditableExcludeAdmin):
+    list_display = ('name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
     list_editable = ('order','is_active','is_deleted')
     search_fields = ('name',)
     ordering = ('order',)
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     inlines = [CategoryChildrenInline]
 
 # ------------------- CategoryChildren -------------------
 @admin.register(CategoryChildren)
-class CategoryChildrenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'category', 'order', 'created_at', 'updated_at','is_active','is_deleted')
+class CategoryChildrenAdmin(AuditableExcludeAdmin):
+    list_display = ('name', 'category', 'order', 'created_at', 'updated_at','is_active','is_deleted')
     list_editable = ('order','is_active','is_deleted')
     list_filter = ('category',)
     search_fields = ('name', 'category__name')
     ordering = ('category', 'order')
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 # ------------------- Brand -------------------
 @admin.register(Brand)
-class BrandAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'created_at', 'updated_at','is_deleted')
+class BrandAdmin(AuditableExcludeAdmin):
+    list_display = ('name', 'created_at', 'updated_at','is_deleted')
     search_fields = ('name',)
     ordering = ('name',)
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 # ------------------- Product -------------------
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('public_id', 'name', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite', 'created_at', 'updated_at','is_deleted')
+    list_display = ('name', 'public_id', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite')
+    fieldsets = (
+        ("اطلاعات اصلی", {
+            "fields": (
+                "name", 
+                "slug", 
+                "category", 
+                "brand", 
+                "is_published", 
+                "is_favorite"
+            )
+        }),
+        ("قیمت‌گذاری و تخفیف", {
+            "fields": (
+                "fixed_price", 
+                "discount_percentage"
+            ),
+            "classes": ("wide",)
+        }),
+        ("محتوا و توضیحات", {
+            "fields": (
+                "specifications", 
+                "description"
+            )
+        }),
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "deleted_at",
+                "created_by",
+                "updated_by",
+            )
+        }),
+    )
+    list_display_links = ('name',)
     prepopulated_fields = {"slug":("name",)}
-    list_editable = ('is_published', 'is_favorite','is_deleted')
+    list_editable = ('is_published', 'is_favorite')
     list_filter = ('category', 'brand', 'is_published', 'is_favorite')
     search_fields = ('name', 'category__name', 'brand__name')
     ordering = ('category', 'name')
-    # readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     inlines = [ProductColorInline]
-    exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'is_deleted')
     
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(
@@ -86,31 +119,64 @@ class ProductAdmin(admin.ModelAdmin):
 
 # ------------------- Color -------------------
 @admin.register(Color)
-class ColorAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name','code','created_at', 'updated_at','is_deleted')
+class ColorAdmin(AuditableExcludeAdmin):
+    list_display = ('name','code','created_at', 'updated_at','is_deleted')
     search_fields = ('name','code')
     ordering = ('name',)
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 
 
 # ------------------- ProductColor -------------------
 @admin.register(ProductColor)
 class ProductColorAdmin(admin.ModelAdmin):
-    list_display = ('id', 'product', 'color','price','discount_percentage','stock','is_deleted')
-    list_editable = ('stock','is_deleted')
+    list_display = ('product', 'color','price','discount_percentage','order','stock','is_deleted')
+    list_editable = ('stock','order','is_deleted')
     list_filter = ('product','color')
     search_fields = ('product__name','color__name')
     ordering = ('product','color')
-    # readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
-    exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'is_deleted')
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
     autocomplete_fields = ['product','color']
     inlines = [ProductColorImageInline]
+    fieldsets = (
+        ("اطلاعات اصلی", {
+            "fields": (
+                "product",
+                "color",
+            )
+        }),
+
+        ("قیمت و تخفیف", {
+            "fields": (
+                "base_price",
+                "base_discount",
+            )
+        }),
+
+        ("موجودی و ترتیب", {
+            "fields": (
+                "stock",
+                "order",
+                "is_deleted",
+            ),
+            "classes": ("wide",)
+        }),
+
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "deleted_at",
+                "created_by",
+                "updated_by",
+            )
+        }),
+    )
 # ------------------- ProductImage -------------------
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'product_color', 'image', 'order', 'is_cover', 'created_at', 'updated_at','is_deleted')
+    list_display = ('product_color', 'image', 'order', 'is_cover', 'created_at', 'updated_at','is_deleted')
     list_editable = ('order', 'is_cover','is_deleted')
     list_filter = ('product_color',)
     search_fields = ('product_color__name',)
@@ -120,7 +186,7 @@ class ProductImageAdmin(admin.ModelAdmin):
 # ------------------- ProductComment -------------------
 @admin.register(ProductComment)
 class ProductCommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'created_by', 'product', 'text', 'is_approved', 'created_at', 'updated_at','is_deleted')
+    list_display = ('created_by', 'product', 'text', 'is_approved', 'created_at', 'updated_at','is_deleted')
     list_editable = ('is_approved','is_deleted')
     list_filter = ('product', 'created_by', 'is_approved')
     search_fields = ('user__username', 'product__name', 'text')

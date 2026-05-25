@@ -4,10 +4,10 @@ from .models import Department, Ticket, TicketMessage
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "is_active", "created_at")
+    list_display = ("name", "is_active", "created_at")
     list_filter = ("is_active",)
     search_fields = ("name",)
-
+    readonly_fields = ('created_by', 'updated_by')
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
@@ -25,11 +25,4 @@ class TicketAdmin(admin.ModelAdmin):
     list_filter = ("status", "priority", "department")
     search_fields = ("ticket_number","title", "description", "reference_code", "created_by__username")
     autocomplete_fields = ("created_by", "assigned_to", "department")
-
-
-@admin.register(TicketMessage)
-class TicketMessageAdmin(admin.ModelAdmin):
-    list_display = ("id", "ticket", "created_by", "is_admin", "created_at")
-    list_filter = ("is_admin", "created_at")
-    search_fields = ("message", "created_by__username", "ticket__title")
-    autocomplete_fields = ("ticket", "created_by")
+    readonly_fields = ('created_by', 'updated_by')
