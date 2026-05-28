@@ -5,8 +5,8 @@ from .models import Banner, Campaign, Gallery
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
-    list_display = ('title', 'position', 'is_active', 'created_at')
-    list_editable = ('is_active','position')
+    list_display = ('title', 'position','order','is_active', 'created_at')
+    list_editable = ('is_active','position','order')
     list_filter = ('position', 'is_active')
     search_fields = ('title',)
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
