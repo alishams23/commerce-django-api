@@ -5,6 +5,7 @@ from product.models import Product, ProductComment, ProductImage
 from user.models import ContactUs, Notification, User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.auth.hashers import make_password
 class PhoneNumberSerializer(serializers.Serializer):
     phone_number = serializers.CharField(max_length = 11)
 
@@ -142,6 +143,26 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
         if not re.match(r'^\d{10}$', value):
             raise serializers.ValidationError("Zip Code must 10 character")
         return value
+    
+    def validate_password(self, value):
+        
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+
+        if not re.search(r'[A-Za-z]', value):
+            raise serializers.ValidationError("Password must contain at least one letter.")
+
+        if not re.search(r'[0-9]', value):
+            raise serializers.ValidationError("Password must contain at least one digit.")
+
+        # if not re.search(r'[!@#$%^&*(),.?\":{}|<>]', value):
+        #     raise serializers.ValidationError("Password must contain at least one special character.")
+
+        phone = self.initial_data.get("phone_number")
+        if phone and phone in value:
+            raise serializers.ValidationError("Password cannot contain your phone number.")
+        
+        return make_password(value)
 
 class DiscountCodeUserSerializer(serializers.ModelSerializer):
     class Meta:
