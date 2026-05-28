@@ -4,7 +4,7 @@ from order.models import DiscountCode, Order
 from product.models import Product, ProductComment, ProductImage
 from user.models import ContactUs, Notification, User
 from rest_framework.validators import UniqueValidator
-
+from django.contrib.auth.validators import UnicodeUsernameValidator
 class PhoneNumberSerializer(serializers.Serializer):
     phone_number = serializers.CharField(max_length = 11)
 
@@ -30,6 +30,8 @@ class LoginSerializer(PhoneNumberSerializer):
 
 
 class RegistrationSerializer(PhoneNumberSerializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
     password = serializers.CharField(write_only=True, min_length=8)
     birthdate = serializers.DateField(required=False, allow_null=True)
     # email = serializers.EmailField(required=False, allow_blank=True)
@@ -130,6 +132,7 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(queryset=User.objects.all())]
     )
     password = serializers.CharField(required = False,max_length=128,write_only = True)
+    username = serializers.CharField(required = False,max_length=150,validators=[UnicodeUsernameValidator(),UniqueValidator(queryset=User.objects.all())])
     class Meta:
         model = User
         fields = ['profile_image','get_full_name','first_name','last_name','username','phone_number','email','province',

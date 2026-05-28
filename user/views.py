@@ -186,6 +186,8 @@ class RegisterViewSet(viewsets.ViewSet):
             serializer.validated_data["password"]
         )
         register_info.email = serializer.validated_data.get("email", "")
+        register_info.first_name = serializer.validated_data["first_name"]
+        register_info.last_name = serializer.validated_data["last_name"]
         register_info.birthdate = serializer.validated_data.get("birthdate", None)
 
         register_info.save()
@@ -270,6 +272,8 @@ class RegisterViewSet(viewsets.ViewSet):
         user = User.objects.create(
             username=register_info.phone_number,
             phone_number=register_info.phone_number,
+            first_name = register_info.first_name,
+            last_name = register_info.last_name,
             password=register_info.password_hash,
             birthdate=register_info.birthdate,
             email=register_info.email,
@@ -455,6 +459,7 @@ class ProfileViewSet(viewsets.ViewSet):
                     self.request.user.interests.order_by('-created_at'), request
                 ),
                 many=True,
+                context={"request": request},
             ).data
         )
 

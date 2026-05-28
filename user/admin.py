@@ -39,9 +39,10 @@ class CustomUserAdmin(UserAdmin):
 # ============================
 @admin.register(RegistrationSession)
 class RegistrationSessionAdmin(admin.ModelAdmin):
-    list_display = ("phone_number","email","created_at", "updated_at")
+    list_display = ("phone_number","first_name","last_name","email","created_at", "updated_at")
     search_fields = ("phone_number","email")
-    readonly_fields = ("phone_number","password_hash","birthdate","email",'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    readonly_fields = ("phone_number","first_name","last_name","birthdate","email",'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+    exclude = ("password_hash",)
 
 
 # ============================
