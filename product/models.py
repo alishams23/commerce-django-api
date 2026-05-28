@@ -225,7 +225,7 @@ class ProductComment(AuditableModel, SoftDeleteModel):
         related_name="replies",
         verbose_name="در جواب نظر",
     )
-    is_approved = models.BooleanField(default=True, verbose_name="وضعیت تایید نظر",db_index=True)
+    is_approved = models.BooleanField(default=False, verbose_name="وضعیت تایید نظر",db_index=True)
 
     objects = ProductCommentManager() 
     
