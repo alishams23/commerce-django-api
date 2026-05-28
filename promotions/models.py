@@ -84,7 +84,11 @@ class Campaign(AuditableModel, SoftDeleteModel):
 
     def __str__(self):
         return self.title
-
+    
+    def clean(self):
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError("زمان پایان کمپین باید بعد از زمان شروع آن باشد.")
+            
     @property
     def is_valid(self):
         return self.is_active and self.start_time <= timezone.now() <= self.end_time
