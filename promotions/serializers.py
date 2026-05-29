@@ -6,7 +6,7 @@ from rest_framework import serializers
 class BannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banner
-        fields = ["position", "title","text","image","url"]
+        fields = ["title","text","image","url"]
         
 class CampaignSerializer(serializers.ModelSerializer):
     products = ProductListSerializer(many = True)

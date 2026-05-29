@@ -32,6 +32,8 @@ class User(AbstractUser,AuditableModel, SoftDeleteModel):
 
 
 class RegistrationSession(AuditableModel, SoftDeleteModel):
+    first_name = models.CharField(_("first name"), max_length=150, blank=True)
+    last_name = models.CharField(_("last name"), max_length=150, blank=True)
     phone_number = models.CharField(max_length=11,unique = True,verbose_name=_("Phone Number"))
     password_hash = models.CharField(verbose_name = _("password"), max_length=128)
     birthdate = models.DateField(null=True,blank=True,verbose_name=_("Birthdate"))

@@ -1,4 +1,5 @@
 import django_filters
+from django.utils import timezone
 from core.filters.boolean_filter import OnlyTrueFilter
 from core.filters.char_filter import CharInFilter
 from product.models import Product
@@ -17,7 +18,19 @@ class ProductFilter(django_filters.FilterSet):
     category = CharInFilter(field_name="category__name",lookup_expr = 'in')
 
     popular = OnlyTrueFilter(field_name="is_favorite")
+    
+    campaign = django_filters.BooleanFilter(field_name="campaigns",method='filter_in_active_campaign')
+
     class Meta:
         model = Product
         fields = ["min_price", "max_price", "brand", "color","category","popular"]
 
+    def filter_in_active_campaign(self, queryset, name, value):
+        if value:
+            now = timezone.now()
+            return queryset.filter(
+                campaigns__is_active=True,
+                campaigns__start_time__lte=now,
+                campaigns__end_time__gte=now
+            ).distinct()
+        return queryset
