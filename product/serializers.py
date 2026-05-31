@@ -33,7 +33,7 @@ class ColorSerializer(serializers.ModelSerializer):
 class CategoryChildrenListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryChildren
-        fields = ["id", "name", "order"]
+        fields = ["id", "name", "order","show_in_menu","icon"]
 
 
 class CategoryListSerializer(serializers.ModelSerializer):
@@ -114,6 +114,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         
 # <------------ Product List Interests ---------------->
 class ProductListInterestsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source = "public_id")
     stock = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     class Meta:
@@ -122,7 +123,7 @@ class ProductListInterestsSerializer(serializers.ModelSerializer):
     
     def get_image(self,obj):
         product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True,order = 0).first()
-        if not product_image:
+        if product_image is None:
             return None
         return self.context.get("request").build_absolute_uri(product_image.image.url)
     

@@ -1,5 +1,7 @@
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from promotions.models import Banner, Campaign, Gallery
@@ -10,17 +12,46 @@ from promotions.serializers import (
 )
 # Create your views here.
 
-@extend_schema(
-    summary="Banners",
-    tags=["Promotions"],
-)
 
-class BannerView(generics.ListAPIView):
+class BannerViewSet(viewsets.GenericViewSet):
     permission_classes = [AllowAny]
     serializer_class = BannerSerializer
+    queryset = Banner.objects.filter(is_active=True)
 
-    def get_queryset(self):
-        return Banner.objects.filter(is_active=True)
+    def _get_by_position(self, position):
+        queryset = self.get_queryset().filter(position=position)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Get wide banner (1)",
+        description="Returns the active wide banner displayed in the middle section of the homepage.",
+        responses=BannerSerializer(many=True),
+        tags=["Promotions"],
+    )
+    @action(detail=False, methods=["get"])
+    def wide_single(self, request):
+        return self._get_by_position("wide_single")
+
+    @extend_schema(
+        summary="Get middle banners (2)",
+        description="Returns the active half-width banners displayed in the middle section of the homepage.",
+        responses=BannerSerializer(many=True),
+        tags=["Promotions"],
+    )
+    @action(detail=False, methods=["get"])
+    def middle_half(self, request):
+        return self._get_by_position("middle_half")
+
+    @extend_schema(
+        summary="Get side banners (4)",
+        description="Returns the active sidebar banners displayed in the homepage side grid.",
+        responses=BannerSerializer(many=True),
+        tags=["Promotions"],
+    )
+    @action(detail=False, methods=["get"])
+    def side_grid_four(self, request):
+        return self._get_by_position("side_grid_four")
 
 @extend_schema(
     summary="Campaigns",

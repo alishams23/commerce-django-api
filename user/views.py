@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from product.models import Product
 from product.serializers import ProductListInterestsSerializer
+from product.utils import decode_product_id
 from user.models import ContactUs, Notification, NotificationRead, User
 from user.pagination import Pagination10
 from user.serializers import (
@@ -185,6 +186,8 @@ class RegisterViewSet(viewsets.ViewSet):
             serializer.validated_data["password"]
         )
         register_info.email = serializer.validated_data.get("email", "")
+        register_info.first_name = serializer.validated_data["first_name"]
+        register_info.last_name = serializer.validated_data["last_name"]
         register_info.birthdate = serializer.validated_data.get("birthdate", None)
 
         register_info.save()
@@ -269,6 +272,8 @@ class RegisterViewSet(viewsets.ViewSet):
         user = User.objects.create(
             username=register_info.phone_number,
             phone_number=register_info.phone_number,
+            first_name = register_info.first_name,
+            last_name = register_info.last_name,
             password=register_info.password_hash,
             birthdate=register_info.birthdate,
             email=register_info.email,
@@ -454,6 +459,7 @@ class ProfileViewSet(viewsets.ViewSet):
                     self.request.user.interests.order_by('-created_at'), request
                 ),
                 many=True,
+                context={"request": request},
             ).data
         )
 
@@ -570,12 +576,12 @@ class InterestsViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["POST"])
     def add(self, request, id):
-        self.request.user.interests.add(get_object_or_404(Product, id=id))
+        self.request.user.interests.add(get_object_or_404(Product, id=decode_product_id(id)))
         return Response({"status": "Success", "Message": "Product Add To Interests."})
 
     @action(detail=True, methods=["Delete"])
     def remove(self, request, id):
-        self.request.user.interests.remove(get_object_or_404(Product, id=id))
+        self.request.user.interests.remove(get_object_or_404(Product, id=decode_product_id(id)))
         return Response(
             {"status": "Success", "Message": "Product Removed To Interests."}
         )

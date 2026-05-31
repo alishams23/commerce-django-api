@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.utils.html import format_html
+from core.admins.auditable import AuditableExcludeAdmin
 from .models import Cart, CartItem, Delivery, DiscountCode, Order, OrderItem
 from django import forms
 
@@ -9,8 +11,8 @@ class CartAdmin(admin.ModelAdmin):
 class CartItemAdmin(admin.ModelAdmin):
     pass
 @admin.register(Delivery)
-class DeliveryAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "cost", "is_active")
+class DeliveryAdmin(AuditableExcludeAdmin):
+    list_display = ("name", "cost", "is_active")
     list_editable = ("is_active",)
     list_filter = ("is_active",)
 
@@ -38,9 +40,52 @@ class OrderItemAdmin(admin.ModelAdmin):
         "total_price",
         "created_at",
         "updated_at",
+        "created_by",
+        "updated_by",
+        "color_display",
     )
     ordering = ("-created_at",)
+    fieldsets = (
+        ("اطلاعات سفارش مادر", {
+            "fields": (
+                "order",
+            )
+        }),
+        ("مشخصات محصول انتخاب شده", {
+            "fields": (
+                "product_name", 
+                "product_count",
+                "product_price", 
+                "total_price",
+                "color_name",
+                "color_display",
+                
+            )
+        }),
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by",
+            )
+        }),
+    )
+    def color_display(self, obj):
+        if not obj.color_code:
+            return "-"
+        return format_html(
+            '<div style="display:flex;align-items:center;gap:8px;">'
+            '<span style="width:18px;height:18px;border-radius:4px;display:inline-block;background:{};border:1px solid #ccc;"></span>'
+            '<code>{}</code>'
+            '</div>',
+            obj.color_code,
+            obj.color_code
+        )
 
+    color_display.short_description = "رنگ"
+    
     def order_display(self, obj):
 
         return obj.order.number if obj.order else "بدون سفارش"
@@ -67,7 +112,7 @@ class OrderItemInline(admin.TabularInline):
     fields = (
         "product_name",
         "color_name",
-        "color_code",
+        "color_display",
         "product_price",
         "product_count",
         "total_price",
@@ -76,12 +121,25 @@ class OrderItemInline(admin.TabularInline):
         "total_price",
         "product_name",
         "color_name",
-        "color_code",
         "product_price",
         "product_count",
+        "color_display",
     )
     can_delete = True
+    
+    def color_display(self, obj):
+        if not obj.color_code:
+            return "-"
+        return format_html(
+            '<div style="display:flex;align-items:center;gap:8px;">'
+            '<span style="width:18px;height:18px;border-radius:4px;display:inline-block;background:{};border:1px solid #ccc;"></span>'
+            '<code>{}</code>'
+            '</div>',
+            obj.color_code,
+            obj.color_code
+        )
 
+    color_display.short_description = "رنگ"
     def total_price(self, obj):
         return obj.calculate_total_price()
 
@@ -136,57 +194,54 @@ class OrderAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
     fieldsets = (
-        (None, {"fields": ("number", "status", "created_at", "updated_at")}),
-        (
-            "اطلاعات مشتری",
-            {
-                "fields": (
-                    "first_name",
-                    "last_name",
-                    "phone_number",
-                    "email",
-                    "created_by",
-                    "updated_by",
-                )
-            },
-        ),
-        (
-            "اطلاعات آدرس ارسال",
-            {
-                "fields": (
-                    "is_different_address",
-                    "province",
-                    "city",
-                    "address",
-                    "zip_code",
-                ),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "اطلاعات مالی",
-            {
-                "fields": (
-                    "total_price",
-                    "discount_price",
-                    "delivery_price",
-                    "final_price",
-                ),
-            },
-        ),
-        (
-            "اطلاعات حمل و نقل",
-            {
-                "fields": ("send_date", "tracking_code"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "تراکنش و توضیحات",
-            {
-                "fields": ("transaction_code", "description"),
-            },
-        ),
+        ("اطلاعات اصلی سفارش", {
+            "fields": (
+                "transaction_code",
+                "send_date",
+                "tracking_code",
+            )
+        }),
+        
+        ("مشخصات خریدار", {
+            "fields": (
+                "created_by", 
+                "first_name", 
+                "last_name",
+                "phone_number", 
+                "email",
+            )
+        }),
+        
+        ("جزئیات ارسال و آدرس", {
+            "classes": ("collapse",),
+            "fields": (
+                "is_different_address",
+                "province", 
+                "city",
+                "address",
+                "zip_code",
+                "description",
+            )
+        }),
+        
+        ("مبالغ و صورت‌حساب (تومان)", {
+            "fields": (
+                "total_price",
+                "discount_price",
+                "delivery_price",
+                "final_price",
+            ),
+            "description": "تمامی مبالغ به واحد تومان می‌باشد."
+        }),
+                
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "updated_by",
+            )
+        }),
     )
 
     def user_display(self, obj):
@@ -205,7 +260,6 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(DiscountCode)
 class DiscountCodeAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
         "name",
         "code",
         "amount",
@@ -214,9 +268,10 @@ class DiscountCodeAdmin(admin.ModelAdmin):
         "current_usage",
         "expired_at",
         "included_type",
-        "is_deleted",
     )
-    list_editable = ("is_percentage", "included_type", "is_deleted")
+    list_editable = ("is_percentage", "included_type")
+    exclude = ('is_deleted',)
+
     filter_horizontal = ("products",)
     list_filter = ("is_percentage", "included_type", "expired_at")
     search_fields = ("name", "code", "products__name")
@@ -224,9 +279,49 @@ class DiscountCodeAdmin(admin.ModelAdmin):
     readonly_fields = (
         "created_at",
         "updated_at",
-        "deleted_at",
         "created_by",
         "updated_by",
+    )
+    
+    fieldsets = (
+        ("اطلاعات اصلی", {
+            "fields": (
+                "name",
+                "code",
+                "included_type",
+            )
+        }),
+
+        ("مشخصات تخفیف", {
+            "fields": (
+                ("amount", "is_percentage"),
+            ),
+            "description": "اگر درصدی است، مقدار باید بین 0 تا 100 باشد."
+        }),
+
+        ("محدودیت و استفاده", {
+            "fields": (
+                "max_usage",
+                "current_usage",
+                "expired_at",
+            ),
+        }),
+
+        ("محصولات شامل تخفیف", {
+            "classes": ("collapse",),
+            "fields": ("products",),
+            "description": "این بخش برای زمانی هست که کدتخفیف شامل محصول/محصولات باشه."
+        }),
+
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by",
+            ),
+        }),
     )
 
     def clean_amount(self, cleaned_data):

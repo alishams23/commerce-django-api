@@ -143,7 +143,7 @@ def callback_gateway_view(request):
 
     user_cart = order.created_by.created_cart_set
 
-    if bank_record.is_success and (int(bank_record.amount) == user_cart.final_price):
+    if bank_record.is_success and (int(bank_record.amount) >= user_cart.final_price):
         completing_order(user_cart.id, tracking_code)
         return render(request, "payment/success.html", context)
 

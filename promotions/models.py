@@ -30,6 +30,7 @@ class Banner(AuditableModel, SoftDeleteModel):
     position = models.CharField(
         max_length=50, choices=POSITION_CHOICES, verbose_name="جایگاه نمایش"
     )
+    order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش ",db_index=True)
     is_active = models.BooleanField(default=True, verbose_name="فعال/غیرفعال")
 
     def clean(self):
@@ -59,7 +60,7 @@ class Banner(AuditableModel, SoftDeleteModel):
     class Meta:
         verbose_name = "بنر"
         verbose_name_plural = "بنرها"
-        ordering = ["-created_at"]
+        ordering = ["order","-created_at"]
 
     def __str__(self):
         return f"{self.title} ({self.get_position_display()})"
@@ -83,7 +84,11 @@ class Campaign(AuditableModel, SoftDeleteModel):
 
     def __str__(self):
         return self.title
-
+    
+    def clean(self):
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError("زمان پایان کمپین باید بعد از زمان شروع آن باشد.")
+            
     @property
     def is_valid(self):
         return self.is_active and self.start_time <= timezone.now() <= self.end_time
