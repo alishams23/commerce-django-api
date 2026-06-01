@@ -106,20 +106,18 @@ class ProductColorSerializer(serializers.ModelSerializer):
 # <------------ Product List ---------------->
 
 class ProductListSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source = "public_id")
     colors = ProductColorSerializer(many = True)
     class Meta:
         model = Product
-        fields = ["id", "name","slug","fixed_price","discount_percentage","colors"]
+        fields = ["id", "product_code" ,"name","slug","fixed_price","discount_percentage","colors"]
         
 # <------------ Product List Interests ---------------->
 class ProductListInterestsSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source = "public_id")
     stock = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     class Meta:
         model = Product
-        fields = ["id", "name","slug","fixed_price","discount_percentage","stock",'image']
+        fields = ["id","product_code","name","slug","fixed_price","discount_percentage","stock",'image']
     
     def get_image(self,obj):
         product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True,order = 0).first()
@@ -133,7 +131,6 @@ class ProductListInterestsSerializer(serializers.ModelSerializer):
 
 # <------------ Product Detail ---------------->
 class ProductDetailSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source = "public_id")
     brand = BrandSerializer()
     colors = ProductColorSerializer(many=True)
     user_interest = serializers.SerializerMethodField()
@@ -141,6 +138,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             "id",
+            "product_code",
             "name",
             "slug",
             "brand",

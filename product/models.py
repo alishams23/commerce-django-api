@@ -5,7 +5,6 @@ from core.models.soft_delete import SoftDeleteModel
 from colorfield.fields import ColorField
 from django_ckeditor_5 import fields as ckeditor_fields
 
-from product.utils import encode_product_id
 # Create your models here.
 
 
@@ -70,6 +69,11 @@ class Product(AuditableModel, SoftDeleteModel):
     )
     name = models.CharField(max_length=100, verbose_name="نام محصول")
     slug = models.SlugField(max_length=255, unique=True,allow_unicode=True,blank = True,verbose_name='اسلاگ محصول')
+    product_code = models.PositiveIntegerField(
+        null=True,
+        unique=True,
+        verbose_name = "کد محصول"
+    )
     brand = models.ForeignKey(
         Brand,
         on_delete=models.PROTECT,
@@ -95,11 +99,6 @@ class Product(AuditableModel, SoftDeleteModel):
     )
     is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار محصول",db_index=True)
     is_favorite = models.BooleanField(default=False, verbose_name="وضعیت محبوبیت")
-
-
-    @property
-    def public_id(self):
-        return encode_product_id(self.id)
 
     def __str__(self):
         return f"{self.name}"

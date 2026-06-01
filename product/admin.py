@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from core.admins.auditable import AuditableExcludeAdmin
-from product.utils import decode_product_id
 from .models import Category, CategoryChildren, Brand, Color, Product, ProductColor, ProductImage, ProductComment
 # ------------------- Inlines -------------------
 class CategoryChildrenInline(admin.TabularInline):
@@ -24,7 +23,7 @@ class ProductColorImageInline(admin.TabularInline):
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
     extra = 1
-    fields = ('product', 'color', 'base_price', 'base_discount','stock')
+    fields = ('product', 'color', 'stock','base_price','base_discount')
     ordering = ('-created_at',)
     autocomplete_fields = ['color']
     verbose_name = "رنگ محصول"
@@ -59,11 +58,12 @@ class BrandAdmin(AuditableExcludeAdmin):
 # ------------------- Product -------------------
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'public_id', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite')
+    list_display = ('name', 'product_code', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite')
     fieldsets = (
         ("اطلاعات اصلی", {
             "fields": (
                 "name", 
+                "product_code",
                 "slug", 
                 "category", 
                 "brand", 
@@ -99,23 +99,10 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug":("name",)}
     list_editable = ('is_published', 'is_favorite')
     list_filter = ('category', 'brand', 'is_published', 'is_favorite')
-    search_fields = ('name', 'category__name', 'brand__name')
+    search_fields = ('name', 'product_code' ,'category__name', 'brand__name')
     ordering = ('category', 'name')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     inlines = [ProductColorInline]
-    
-    def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super().get_search_results(
-            request, queryset, search_term
-        )
-
-        try:
-            real_id = decode_product_id(int(search_term))
-            queryset |= self.model.objects.filter(id=real_id)
-        except:
-            pass
-
-        return queryset, use_distinct
 
 # ------------------- Color -------------------
 @admin.register(Color)
