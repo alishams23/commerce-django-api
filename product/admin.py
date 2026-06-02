@@ -66,6 +66,7 @@ class ProductAdmin(admin.ModelAdmin):
                 "product_code",
                 "slug", 
                 "category", 
+                "product_type", 
                 "brand", 
                 "is_published", 
                 "is_favorite"
