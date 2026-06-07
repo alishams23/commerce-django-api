@@ -129,10 +129,14 @@ class CartItem(AuditableModel, SoftDeleteModel):
     @property
     def discounted_price(self):
         return self.count * self.product_color.discounted_price if self.discounted == 0 else self.discounted
-
+    
+    @property
+    def base_discounted(self):
+        return self.count * self.product_color.discounted_price
+    
     def discount_calculate(self):
         if self.cart.discount_code.included_type == 'product':
-            self.discounted = self.cart.discount_code.apply_discount(amount = self.discounted_price)
+            self.discounted = self.cart.discount_code.apply_discount(amount = self.base_discounted)
             self.save()
             return True
 
@@ -152,11 +156,19 @@ class CartItem(AuditableModel, SoftDeleteModel):
 class Order(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (
         ("pending_pay", "در انتظار پرداخت"),
-        ("doing", "در حال آماده سازی"),# Paid!
-        ("send", "ارسال شده"),
-        ("completing", "تکمیل شده"),
-        ("canceled", "لغو شده"),
+        ("paid", "پرداخت شده"),
+        ("pending_review", "در انتظار بررسی"),
+        ("doing", "در حال آماده سازی"),
+        ("shipped", "ارسال شده"),
+        ("cancelled", "لغو شده"),
     )
+    
+    CANCEL_REASON_CHOICES = (
+        ("payment_timeout", "اتمام زمان پرداخت"),
+        ("payment_error", "خطا در پرداخت"),
+        ("admin_cancelled", "لغو توسط ادمین"),
+        ("customer_request", "لغو توسط مشتری"),)
+
     # user/author = created_by
 
     status = models.CharField(
@@ -165,7 +177,21 @@ class Order(AuditableModel, SoftDeleteModel):
         default="pending_pay",
         verbose_name="وضعیت سفارش",
     )
-    
+
+    cancel_reason = models.CharField(
+        max_length=50,
+        choices=CANCEL_REASON_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name = "دلیل لغو سفارش"
+    )
+
+
+    cancel_description = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="توضیحات لغو سفارش توسط ادمین"
+    )
     number = models.CharField(max_length=20,unique=True, verbose_name='شماره سفارش')
     
     tracking_code = models.CharField(
@@ -173,7 +199,7 @@ class Order(AuditableModel, SoftDeleteModel):
     )
     send_date = models.DateTimeField(blank=True, null=True, verbose_name="تاریخ ارسال")
     
-    transaction_code = models.CharField(max_length=255, null=False, blank=False,verbose_name='کد تراكنش')
+    transaction_code = models.CharField(max_length=255, null=True, blank=True,verbose_name='کد تراكنش')
 
     description = models.TextField(blank=True, null=True, verbose_name="توضیحات سفارش")
 
@@ -190,6 +216,22 @@ class Order(AuditableModel, SoftDeleteModel):
     address = models.TextField(blank = True,null = True,verbose_name="آدرس")
     zip_code = models.CharField(blank = True,null = True,max_length=10, verbose_name="کدپستی")
 
+    discount_code = models.CharField(max_length=50, null=True, blank=True, verbose_name="کد تخفیف")
+    discount_amount = models.PositiveBigIntegerField(default=0, verbose_name="مقدار تخفیف")
+    discount_type = models.CharField(
+        max_length=10, 
+        choices=[('percent', 'درصد'), ('amount', 'تومان')], 
+        null=True, blank=True, 
+        verbose_name="نوع مقدار تخفیف"
+    )
+    discount_scope = models.CharField(
+        max_length=15, 
+        choices=[('cart', 'سبد خرید'), ('product', 'محصول')], 
+        null=True, blank=True, 
+        verbose_name="دامنه اعمال کد"
+    )
+
+    
     total_price = models.PositiveBigIntegerField(default = 0,verbose_name="جمع مبلغ آیتم ها(تومان)")
     discount_price = models.PositiveBigIntegerField(
         default=0, verbose_name="مبلغ تخفیف(تومان)"
@@ -222,6 +264,10 @@ class OrderItem(AuditableModel, SoftDeleteModel):
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="items", verbose_name="سفارش"
     )
+    product_color_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
     product_name = models.CharField(max_length=100, verbose_name="نام محصول")
     color_name = models.CharField(max_length=50,blank = True,null = True,verbose_name="نام رنگ")
     color_code = ColorField(default = "#ffffff" ,verbose_name="کد رنگ (HEX)")
@@ -230,11 +276,22 @@ class OrderItem(AuditableModel, SoftDeleteModel):
     )
     product_count = models.PositiveIntegerField(default = 0,verbose_name="تعداد محصول")
     total_price = models.PositiveBigIntegerField(default = 0,verbose_name="جمع جزء(تومان)")
+    
+    unit_discount_amount = models.PositiveBigIntegerField(
+        default=0,
+        verbose_name="مبلغ تخفیف پایه محصول (تومان)"
+    )
+    total_discount_amount  = models.PositiveBigIntegerField(default = 0, verbose_name="مجموع تخفیف پایه محصول(تومان)")
+    
+    coupon_discount_amount = models.PositiveBigIntegerField(default = 0, verbose_name="تخفیف کد روی آیتم(تومان)")
 
+    final_price = models.PositiveBigIntegerField(default = 0, verbose_name="مبلغ نهایی آیتم(تومان)")
 
-    def calculate_total_price(self):
-        return self.product_count * self.product_price
-
+    @property
+    def is_coupon_applied(self):
+        return (self.coupon_discount_amount or 0) > 0
+    
+    
     def __str__(self):
         return f"آیتم سفارش  {self.order.number}"
 
