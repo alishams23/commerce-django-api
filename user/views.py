@@ -32,6 +32,7 @@ from rest_framework import serializers
 # from dj_rest_auth.registration.views
 from user.models import RegistrationSession
 from django.contrib.auth import authenticate
+from user.service.dashboard import DashboardService
 from user.service.otp import OTPService
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, OpenApiResponse, inline_serializer, extend_schema
 # Create your views here.
@@ -399,9 +400,13 @@ class ProfileViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=["GET", "PATCH"])
     def dashboard(self, request):
-        if self.request.method == "GET":
-            return Response(DashboardSerializer(instance=self.request.user).data)
+        if request.method == "GET":
+            user = request.user
 
+            user_data = DashboardSerializer(instance=user).data
+
+            return Response({**user_data, "order_stats": DashboardService.get_order_stats(user)})
+        
         serializer = DashboardSerializer(
             data=self.request.data, instance=self.request.user
         )

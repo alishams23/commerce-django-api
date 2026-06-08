@@ -1,9 +1,10 @@
 from django.http import Http404
 from django.shortcuts import render
+from django.db.models import F
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from django.db.models import F
+from azbankgateways.models.enum import PaymentStatus
 # Create your views here.
 
 
@@ -20,7 +21,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 from order.models import Order
 from payments.serializers import DetailPaySerializer
 
-from payments.tasks import create_order, completing_order, delete_order
+from payments.tasks import create_order
 
 
 class PaymentViewSet(viewsets.ViewSet):
@@ -144,9 +145,18 @@ def callback_gateway_view(request):
     user_cart = order.created_by.created_cart_set
 
     if bank_record.is_success and (int(bank_record.amount) >= user_cart.final_price):
-        completing_order(user_cart.id, tracking_code)
+        order.status = "paid"
+        order.save()
         return render(request, "payment/success.html", context)
 
+    elif bank_record.status == PaymentStatus.CANCEL_BY_USER:
+        order.status = "cancelled"
+        order.cancel_reason = "customer_request"
+        order.save()
+        return render(request, "payment/failed.html", context)
+
     else:
-        delete_order(tracking_code)
+        order.status = "cancelled"
+        order.cancel_reason = "payment_error"
+        order.save()
         return render(request, "payment/failed.html", context)

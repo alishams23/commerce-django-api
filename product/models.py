@@ -61,11 +61,18 @@ class Brand(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "برندها "
 
 class Product(AuditableModel, SoftDeleteModel):
+    PRODUCT_TYPE = (("store", "محصولات فروشگاه"),("factory", "محصولات کارخانه"))
     category = models.ForeignKey(
         CategoryChildren,
         on_delete=models.PROTECT,
         related_name="products",
         verbose_name="دسته بندی محصول",db_index=True
+    )
+    product_type = models.CharField(
+        max_length=20,
+        choices=PRODUCT_TYPE,
+        default = "store",
+        verbose_name = "نوع محصول"
     )
     name = models.CharField(max_length=100, verbose_name="نام محصول")
     slug = models.SlugField(max_length=255, unique=True,allow_unicode=True,blank = True,verbose_name='اسلاگ محصول')
