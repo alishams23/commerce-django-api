@@ -66,6 +66,7 @@ class ProductAdmin(admin.ModelAdmin):
                 "product_code",
                 "slug", 
                 "category", 
+                "product_type", 
                 "brand", 
                 "is_published", 
                 "is_favorite"
@@ -116,7 +117,7 @@ class ColorAdmin(AuditableExcludeAdmin):
 # ------------------- ProductColor -------------------
 @admin.register(ProductColor)
 class ProductColorAdmin(admin.ModelAdmin):
-    list_display = ('product', 'color','price','discount_percentage','order','stock','is_deleted')
+    list_display = ('product', 'color','price','discount_percentage','discounted_price','order','stock','is_deleted')
     list_editable = ('stock','order','is_deleted')
     list_filter = ('product','color')
     search_fields = ('product__name','color__name')

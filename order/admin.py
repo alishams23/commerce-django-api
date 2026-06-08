@@ -1,15 +1,11 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from core.admins.auditable import AuditableExcludeAdmin
-from .models import Cart, CartItem, Delivery, DiscountCode, Order, OrderItem
+from .models import Delivery, DiscountCode, Order, OrderItem
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
-@admin.register(Cart)
-class CartAdmin(admin.ModelAdmin):
-    pass
-@admin.register(CartItem)
-class CartItemAdmin(admin.ModelAdmin):
-    pass
 @admin.register(Delivery)
 class DeliveryAdmin(AuditableExcludeAdmin):
     list_display = ("name", "cost", "is_active")
@@ -43,6 +39,10 @@ class OrderItemAdmin(admin.ModelAdmin):
         "created_by",
         "updated_by",
         "color_display",
+        "unit_discount_amount",
+        "total_discount_amount",
+        "coupon_discount_amount",
+        "final_price",
     )
     ordering = ("-created_at",)
     fieldsets = (
@@ -54,11 +54,15 @@ class OrderItemAdmin(admin.ModelAdmin):
         ("مشخصات محصول انتخاب شده", {
             "fields": (
                 "product_name", 
+                "color_name",
+                "color_display",
                 "product_count",
                 "product_price", 
                 "total_price",
-                "color_name",
-                "color_display",
+                "unit_discount_amount",
+                "total_discount_amount",
+                "coupon_discount_amount",
+                "final_price",
                 
             )
         }),
@@ -84,19 +88,12 @@ class OrderItemAdmin(admin.ModelAdmin):
             obj.color_code
         )
 
-    color_display.short_description = "رنگ"
+    color_display.short_description = "کد رنگ"
     
     def order_display(self, obj):
-
         return obj.order.number if obj.order else "بدون سفارش"
 
     order_display.short_description = "شماره سفارش"
-
-    def total_price(self, obj):
-
-        return obj.calculate_total_price()
-
-    total_price.short_description = "جمع جزء (تومان)"
 
     def __str__(self):
         return f"آیتم سفارش {self.order_display}"
@@ -113,12 +110,20 @@ class OrderItemInline(admin.TabularInline):
         "product_name",
         "color_name",
         "color_display",
-        "product_price",
         "product_count",
+        "product_price",
         "total_price",
+        "unit_discount_amount",
+        "total_discount_amount",
+        "coupon_discount_amount",
+        "final_price",
     )
     readonly_fields = (
         "total_price",
+        "unit_discount_amount",
+        "total_discount_amount",
+        "coupon_discount_amount",
+        "final_price",
         "product_name",
         "color_name",
         "product_price",
@@ -139,15 +144,46 @@ class OrderItemInline(admin.TabularInline):
             obj.color_code
         )
 
-    color_display.short_description = "رنگ"
-    def total_price(self, obj):
-        return obj.calculate_total_price()
-
-    total_price.short_description = "جمع جزء"
-
+    color_display.short_description = "کد رنگ"
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+
+    def save_model(self, request, obj, form, change):
+        obj.updated_by = request.user 
+        if change:
+            
+            if obj.status == "cancelled":
+                
+                obj.cancel_reason = form.cleaned_data.get("cancel_reason")
+                
+                if  not form.cleaned_data.get("cancel_description"):
+                    raise ValidationError("برای لغو توسط ادمین، توضیحات الزامی است")
+                obj.cancel_reason = "admin_cancelled"
+                self.readonly_fields += ("cancel_reason","cancel_description")
+                
+            elif obj.status == "shipped":
+                if not obj.tracking_code:
+                    raise ValidationError("وارد کردن کد رهگیری ارسال الزامی است.")
+
+                if not obj.send_date:
+                    obj.send_date = timezone.now()
+                
+        super().save_model(request, obj, form, change)    
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(self.readonly_fields)
+
+        if obj and obj.status in ['shipped', 'cancelled']:
+            readonly_fields.extend([
+                'status',
+                'send_date',
+                'tracking_code',
+                'cancel_description',
+            ])
+
+        return readonly_fields
+    
     list_display = (
         "number",
         "user_display",
@@ -187,6 +223,12 @@ class OrderAdmin(admin.ModelAdmin):
         "discount_price",
         "delivery_price",
         "final_price",
+        "cancel_reason",
+        "discount_code",
+        "discount_amount",
+        "discount_type",
+        "discount_scope",
+        "send_date",
         "created_at",
         "updated_at",
     )
@@ -196,12 +238,19 @@ class OrderAdmin(admin.ModelAdmin):
     fieldsets = (
         ("اطلاعات اصلی سفارش", {
             "fields": (
+                "status",
                 "transaction_code",
                 "send_date",
                 "tracking_code",
             )
         }),
         
+        ("جزئیات لغو سفارش", {
+            "fields": (
+                "cancel_reason", 
+                "cancel_description", 
+            )
+        }),
         ("مشخصات خریدار", {
             "fields": (
                 "created_by", 
@@ -209,6 +258,15 @@ class OrderAdmin(admin.ModelAdmin):
                 "last_name",
                 "phone_number", 
                 "email",
+            )
+        }),
+        
+        ("اطلاعات کد تخفیف", {
+            "fields": (
+                "discount_code", 
+                "discount_amount", 
+                "discount_type",
+                "discount_scope", 
             )
         }),
         

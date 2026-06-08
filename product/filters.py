@@ -21,9 +21,10 @@ class ProductFilter(django_filters.FilterSet):
     
     campaign = django_filters.BooleanFilter(field_name="campaigns",method='filter_in_active_campaign')
 
+    product_type = django_filters.ChoiceFilter(field_name="product_type",choices=Product.PRODUCT_TYPE)
     class Meta:
         model = Product
-        fields = ["min_price", "max_price", "brand", "color","category","popular"]
+        fields = ["min_price", "max_price", "brand", "color","category","popular","product_type"]
 
     def filter_in_active_campaign(self, queryset, name, value):
         if value:

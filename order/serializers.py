@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from order.models import Cart, CartItem, Delivery, DiscountCode
 from product.models import Color, Product, ProductColor
-from user.models import User
 
 
 class DiscountCodeOrderSerializer(serializers.ModelSerializer):
@@ -71,7 +70,7 @@ class CartSerializer(serializers.ModelSerializer):
     item_count = serializers.SerializerMethodField()
     class Meta:
         model = Cart
-        fields = ['id','status','discount_code','delivery_type','total_price','discounted_price','item_count','items']
+        fields = ['id','discount_code','delivery_type','total_price','discounted_price','final_price','item_count','items']
         
     def get_item_count(self,obj):
         return obj.items.count()

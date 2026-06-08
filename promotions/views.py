@@ -3,7 +3,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
+from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema
+from product.models import Product
 from promotions.models import Banner, Campaign, Gallery
 from promotions.serializers import (
     BannerSerializer,
@@ -67,7 +69,16 @@ class CampaignView(generics.ListAPIView):
             is_active=True,
             start_time__lte=now,
             end_time__gte=now,
-        ).prefetch_related("products")
+        ).prefetch_related(
+            Prefetch(
+                "products",
+                # TODO: Replace with ProductQuerySet.published() when manager is introduced
+                queryset=Product.objects.filter(
+                    is_published=True,
+                    is_deleted=False,
+                )
+            )
+        )
 
 
 @extend_schema(
