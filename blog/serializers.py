@@ -16,9 +16,17 @@ class CategoryBlogSerializer(serializers.ModelSerializer):
 
 class BlogListSerializer(serializers.ModelSerializer):
     category = serializers.CharField(source = "category.name")
+    excerpt = serializers.SerializerMethodField()
     class Meta:
         model = Blog
-        fields = ['category','title','slug','published_at','reading_time','cover']
+        fields = ['category','title','excerpt','slug','published_at','reading_time','cover']
+
+    def get_excerpt(self, obj):
+        return (
+            obj.text_body[:150] + "..."
+            if len(obj.text_body) > 150
+            else obj.text_body
+        )
 
 
 class BlogDetailSerializer(serializers.ModelSerializer):
