@@ -1,4 +1,4 @@
-from django.contrib import admin
+from core.admins.mixins import AllObjectsAdmin
 
-class AuditableExcludeAdmin(admin.ModelAdmin):
+class AuditableExcludeAdmin(AllObjectsAdmin):
     exclude = ('created_at', 'updated_at', 'created_by', 'updated_by','is_deleted')

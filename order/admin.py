@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from core.admins.auditable import AuditableExcludeAdmin
+from core.admins.mixins import AllObjectsAdmin
 from .models import Delivery, DiscountCode, Order, OrderItem
 from django import forms
 from django.core.exceptions import ValidationError
@@ -14,7 +15,7 @@ class DeliveryAdmin(AuditableExcludeAdmin):
 
 
 @admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
+class OrderItemAdmin(AllObjectsAdmin):
     list_display = (
         "order_display",
         "product_name",
@@ -147,7 +148,7 @@ class OrderItemInline(admin.TabularInline):
     color_display.short_description = "کد رنگ"
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(AllObjectsAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.updated_by = request.user 
@@ -316,7 +317,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 # ------------------- DiscountCode -------------------
 @admin.register(DiscountCode)
-class DiscountCodeAdmin(admin.ModelAdmin):
+class DiscountCodeAdmin(AllObjectsAdmin):
     list_display = (
         "name",
         "code",

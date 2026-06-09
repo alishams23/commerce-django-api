@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from core.models.auditable import AuditableModel
-from core.models.soft_delete import SoftDeleteModel
+from core.models.soft_delete import SoftDeleteManager, SoftDeleteModel
 from colorfield.fields import ColorField
 from django_ckeditor_5 import fields as ckeditor_fields
 
@@ -60,6 +60,10 @@ class Brand(AuditableModel, SoftDeleteModel):
         verbose_name = "برند"
         verbose_name_plural = "برندها "
 
+class ProductManager(SoftDeleteManager):#TODO:create published manager class (inherit: SoftDeleteManager)
+    def get_queryset(self):
+        return super().get_queryset().filter(is_published = True)
+
 class Product(AuditableModel, SoftDeleteModel):
     PRODUCT_TYPE = (("store", "محصولات فروشگاه"),("factory", "محصولات کارخانه"))
     category = models.ForeignKey(
@@ -106,6 +110,10 @@ class Product(AuditableModel, SoftDeleteModel):
     )
     is_published = models.BooleanField(default=True, verbose_name="وضعیت انتشار محصول",db_index=True)
     is_favorite = models.BooleanField(default=False, verbose_name="وضعیت محبوبیت")
+
+    objects = ProductManager()
+
+    all_objects = models.Manager()
 
     def __str__(self):
         return f"{self.name}"
@@ -212,7 +220,7 @@ class ProductImage(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "عکس های محصولات"
 
 
-class ProductCommentManager(models.Manager):
+class ProductCommentManager(SoftDeleteManager):
     def get_queryset(self):
         return super().get_queryset().filter(is_approved = True)
 

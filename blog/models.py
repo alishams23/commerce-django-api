@@ -5,7 +5,7 @@ from django.utils.text import slugify
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 from core.models.auditable import AuditableModel
-from core.models.soft_delete import SoftDeleteModel
+from core.models.soft_delete import SoftDeleteManager, SoftDeleteModel
 from user.models import User
 from django_ckeditor_5 import fields as ckeditor_fields
 # Create your models here.
@@ -102,7 +102,7 @@ class BlogMedia(AuditableModel, SoftDeleteModel):
         verbose_name_plural = "رسانه های وبلاگ ها"
         ordering = ['created_at']
 
-class BlogCommentManager(models.Manager):
+class BlogCommentManager(SoftDeleteManager):
     def get_queryset(self):
         return super().get_queryset().filter(is_approved = True)
 
