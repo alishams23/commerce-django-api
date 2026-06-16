@@ -26,6 +26,7 @@ PROJECT_NAME_APPS = [
     "helpdesk",
     "payments",
     "promotions",
+    "shop",
 ]
 
 THIRD_PARTY_APPS = [
