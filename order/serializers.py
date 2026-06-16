@@ -27,7 +27,7 @@ class DeliverySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Delivery
-        fields = ['id','name','cost','is_active']
+        fields = ['id','name','intra_province_cost','inter_province_cost']
 
 class ColorOrderSerializer(serializers.ModelSerializer):
     

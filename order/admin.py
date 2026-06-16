@@ -9,7 +9,7 @@ from django.utils import timezone
 
 @admin.register(Delivery)
 class DeliveryAdmin(AuditableExcludeAdmin):
-    list_display = ("name", "cost", "is_active")
+    list_display = ("name", "intra_province_cost","inter_province_cost","is_active")
     list_editable = ("is_active",)
     list_filter = ("is_active",)
 
@@ -223,6 +223,7 @@ class OrderAdmin(AllObjectsAdmin):
         "total_price",
         "discount_price",
         "delivery_price",
+        "delivery_type",
         "final_price",
         "cancel_reason",
         "discount_code",
@@ -279,6 +280,7 @@ class OrderAdmin(AllObjectsAdmin):
                 "city",
                 "address",
                 "zip_code",
+                "delivery_type",
                 "description",
             )
         }),
