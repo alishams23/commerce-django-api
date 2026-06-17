@@ -1,4 +1,6 @@
 from django.contrib import admin
+
+from core.admins.mixins import AllObjectsAdmin
 from .models import Blog, BlogMedia, BlogComment, CategoryBlog
 
 
@@ -20,7 +22,7 @@ class BlogCommentInline(admin.TabularInline):
     verbose_name_plural = "نظرات"
 
 @admin.register(CategoryBlog)
-class CategoryBlogAdmin(admin.ModelAdmin):
+class CategoryBlogAdmin(AllObjectsAdmin):
     list_display = ('name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
     list_editable = ('order','is_active','is_deleted')
     search_fields = ('name',)
@@ -28,7 +30,7 @@ class CategoryBlogAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
 @admin.register(Blog)
-class BlogAdmin(admin.ModelAdmin):
+class BlogAdmin(AllObjectsAdmin):
     list_display = ('title','reading_time','created_by', 'is_published', 'published_at', 'created_at')
     list_filter = ('category','is_published', 'created_by', 'published_at')
     prepopulated_fields = {"slug":("title",)}
@@ -47,7 +49,7 @@ class BlogAdmin(admin.ModelAdmin):
 
 
 @admin.register(BlogMedia)
-class BlogMediaAdmin(admin.ModelAdmin):
+class BlogMediaAdmin(AllObjectsAdmin):
     list_display = ('blog','media_type', 'created_at')
     list_filter = ('blog',)
     search_fields = ('blog__title',)
@@ -55,7 +57,7 @@ class BlogMediaAdmin(admin.ModelAdmin):
 
 
 @admin.register(BlogComment)
-class BlogCommentAdmin(admin.ModelAdmin):
+class BlogCommentAdmin(AllObjectsAdmin):
     list_display = ('blog', 'created_by', 'is_approved', 'created_at')
     list_filter = ('is_approved', 'blog', 'created_by')
     search_fields = ('text', 'created_by__username', 'blog__title')

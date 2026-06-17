@@ -66,7 +66,7 @@ class ProductsListView(generics.ListAPIView):
     serializer_class = ProductListSerializer
     pagination_class = SearchPagination
     queryset = (
-        Product.objects.filter(is_published=True, is_deleted=False)
+        Product.objects.all()
         .prefetch_related("colors__images", "colors__color")
         .annotate(rating=Count("interested_users", distinct=True))
         .distinct().order_by('-created_at')
@@ -107,7 +107,7 @@ class ProductDetailViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = SearchPagination
 
     queryset = (
-        Product.objects.filter(is_published=True, is_deleted=False)
+        Product.objects.all()
         .prefetch_related("colors", "colors__images")
         .select_related("brand")
     )

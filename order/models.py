@@ -1,5 +1,6 @@
 from django.db import models
 
+from core.constants.provinces import ProvinceChoices
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 from product.models import Product, ProductColor
@@ -27,11 +28,18 @@ class Delivery(AuditableModel, SoftDeleteModel):
         verbose_name="نوع ارسال",
         help_text="...به عنوان مثال: پست ، تیپاکس و",
     )
-    cost = models.PositiveBigIntegerField(verbose_name="هزینه ارسال(تومان)")
+    intra_province_cost  = models.PositiveBigIntegerField(default=0 , verbose_name="هزینه ارسال درون استان(تومان)")
+    inter_province_cost = models.PositiveBigIntegerField(default=0 , verbose_name="هزینه ارسال بیرون استان(تومان)")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
 
+    def get_cost(self, is_same_province = False):
+        if is_same_province:
+            return self.intra_province_cost
+        return self.inter_province_cost
+
+
     def __str__(self):
-        return f"نوع حمل و نقل {self.name} - {self.cost}"
+        return f"نوع حمل و نقل {self.name}"
 
     class Meta:
         verbose_name = "نوع حمل و نقل"
@@ -95,7 +103,7 @@ class Cart(AuditableModel, SoftDeleteModel):
 
     @property
     def final_price(self):
-        return self.discounted_price + (self.delivery_type.cost if self.delivery_type else 0)
+        return self.discounted_price + (self.delivery_type.get_cost() if self.delivery_type else 0)
     
     
     def __str__(self):
@@ -211,11 +219,12 @@ class Order(AuditableModel, SoftDeleteModel):
     is_different_address = models.BooleanField(
         default=False, verbose_name="آدرس متفاوت"
     )
-    province = models.CharField(blank = True,null = True,max_length=20, verbose_name="استان")
+    province = models.CharField(max_length=50,blank = True,null = True,choices=ProvinceChoices.choices,verbose_name="استان")
     city = models.CharField(blank = True,null = True,max_length=30, verbose_name="شهر")
     address = models.TextField(blank = True,null = True,verbose_name="آدرس")
     zip_code = models.CharField(blank = True,null = True,max_length=10, verbose_name="کدپستی")
-
+    delivery_type = models.CharField(blank = True,null = True,max_length=75, verbose_name="نوع ارسال")
+    
     discount_code = models.CharField(max_length=50, null=True, blank=True, verbose_name="کد تخفیف")
     discount_amount = models.PositiveBigIntegerField(default=0, verbose_name="مقدار تخفیف")
     discount_type = models.CharField(
@@ -375,9 +384,3 @@ class DiscountCode(AuditableModel, SoftDeleteModel):
     class Meta:
         verbose_name = "کدتخفیف"
         verbose_name_plural = "کدهای تخفیف"
-
-
-# class DiscountUsedModel():
-#     user = ""
-#     disocunt = DiscountCode
-#     used_time = ""
