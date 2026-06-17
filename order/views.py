@@ -2,8 +2,10 @@ from rest_framework import generics, status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.db.models import ExpressionWrapper, F, DecimalField
+from core.constants.provinces import ProvinceChoices
 from order.models import Cart, CartItem, Delivery, DiscountCode
 from order.serializers import (
     ApplyDiscountSerializer,
@@ -17,6 +19,34 @@ from order.serializers import AddToCartSerializer
 
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 # Create your views here.
+
+@extend_schema(
+    summary="List provinces",
+    description="""
+        Returns list of all provinces.
+
+        Used in checkout and address forms to allow users
+        to select their province.
+
+        Each item contains:
+        - value: internal slug used in backend
+        - label: human readable Persian name
+    """,
+    tags=["Order"],
+)
+class ProvinceListAPIView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        return Response({
+            "results": [
+                {
+                    "value": item.value,
+                    "label": item.label
+                }
+                for item in ProvinceChoices
+            ]
+        })
 
 
 @extend_schema(

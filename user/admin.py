@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+
+from core.admins.mixins import AllObjectsAdmin
 from .models import OTPCodeModel, User, RegistrationSession, ContactUs, Notification, NotificationRead
 
 from django.contrib.auth.admin import UserAdmin
@@ -17,7 +19,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ("verify_phone_number", "province", "city", "is_staff", "is_superuser")
     fieldsets = (
         (_("اطلاعات کاربری"), {
-            "fields": ("username", "first_name", "last_name", "email", "password","birthdate")
+            "fields": ("username", "first_name", "last_name", "email", "password","birthdate","interests")
         }),
         (_("اطلاعات تماس"), {
             "fields": ("phone_number", "verify_phone_number", "receiver_phone_number")
@@ -38,7 +40,7 @@ class CustomUserAdmin(UserAdmin):
 # RegistrationSession Admin
 # ============================
 @admin.register(RegistrationSession)
-class RegistrationSessionAdmin(admin.ModelAdmin):
+class RegistrationSessionAdmin(AllObjectsAdmin):
     list_display = ("phone_number","first_name","last_name","email","created_at", "updated_at")
     search_fields = ("phone_number","email")
     readonly_fields = ("phone_number","first_name","last_name","birthdate","email",'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
@@ -49,7 +51,7 @@ class RegistrationSessionAdmin(admin.ModelAdmin):
 # ContactUs Admin
 # ============================
 @admin.register(ContactUs)
-class ContactUsAdmin(admin.ModelAdmin):
+class ContactUsAdmin(AllObjectsAdmin):
     list_display = ("first_name", "last_name", "phone_number", "email", "is_called", "created_at")
     search_fields = ("first_name", "last_name", "phone_number", "email")
     list_editable = ("is_called",)
@@ -84,7 +86,7 @@ class NotificationReadInline(admin.TabularInline):
 # Notification Admin
 # ============================
 @admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
+class NotificationAdmin(AllObjectsAdmin):
     list_display = ("title", "is_published", "published_at","subject","created_at")
     search_fields = ("title", "text")
     list_filter = ("is_published", "published_at","subject","created_at")
@@ -126,7 +128,7 @@ class IsReadFilter(SimpleListFilter):
 # NotificationRead Admin
 # ============================
 @admin.register(NotificationRead)
-class NotificationReadAdmin(admin.ModelAdmin):
+class NotificationReadAdmin(AllObjectsAdmin):
     list_display = ("user", "notification","is_read","read_at", "created_at")
     search_fields = ("user__username", "notification__title")
     list_filter = (IsReadFilter, "read_at", "created_at") 
@@ -143,6 +145,6 @@ class NotificationReadAdmin(admin.ModelAdmin):
     is_read.short_description = _("خوانده شده")
 
 @admin.register(OTPCodeModel)
-class OTPCodeModelAdmin(admin.ModelAdmin):
+class OTPCodeModelAdmin(AllObjectsAdmin):
     list_display = ("phone_number","purpose","last_sent_at","is_used")
     list_filter = ("phone_number","purpose","is_used")

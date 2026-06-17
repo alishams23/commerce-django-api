@@ -3,6 +3,7 @@ from celery import shared_task
 from django.db import transaction
 
 from order.models import Cart, Order, OrderItem
+from shop.models import ShopSettings
 from user.models import User
 
 
@@ -58,13 +59,27 @@ def create_order(validated_data, user_id, tracking_code):
             order_item.total_price = cart_item.total_price
             order_item.final_price = cart_item.discounted_price
             order_item.save()
+            
+        shop_settings = ShopSettings.objects.order_by("created_at").first()
+
+        is_same_province = (
+            shop_settings and order.province == shop_settings.province
+        )
 
         order.total_price = user_cart.total_price
         order.discount_price = user_cart.total_price - user_cart.discounted_price
         order.delivery_price = (
-            user_cart.delivery_type.cost if user_cart.delivery_type else 0
+            user_cart.delivery_type.get_cost(is_same_province)
+            if user_cart.delivery_type
+            else 0
         )
-        order.final_price = user_cart.final_price
+        order.delivery_type = (
+            user_cart.delivery_type.name
+            if user_cart.delivery_type
+            else None
+        )
+    
+        order.final_price = user_cart.discounted_price + order.delivery_price
         order.number = order.generate_number()
         order.save()
         completing_order.apply_async(args=[user_cart.id, tracking_code], countdown=600)

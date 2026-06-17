@@ -69,16 +69,7 @@ class CampaignView(generics.ListAPIView):
             is_active=True,
             start_time__lte=now,
             end_time__gte=now,
-        ).prefetch_related(
-            Prefetch(
-                "products",
-                # TODO: Replace with ProductQuerySet.published() when manager is introduced
-                queryset=Product.objects.filter(
-                    is_published=True,
-                    is_deleted=False,
-                )
-            )
-        )
+        ).prefetch_related("products")
 
 
 @extend_schema(

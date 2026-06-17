@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from core.admins.auditable import AuditableExcludeAdmin
+from core.admins.mixins import AllObjectsAdmin
 from .models import Category, CategoryChildren, Brand, Color, Product, ProductColor, ProductImage, ProductComment
 # ------------------- Inlines -------------------
 class CategoryChildrenInline(admin.TabularInline):
@@ -57,7 +58,7 @@ class BrandAdmin(AuditableExcludeAdmin):
 
 # ------------------- Product -------------------
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(AllObjectsAdmin):
     list_display = ('name', 'product_code', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite')
     fieldsets = (
         ("اطلاعات اصلی", {
@@ -93,6 +94,7 @@ class ProductAdmin(admin.ModelAdmin):
                 "deleted_at",
                 "created_by",
                 "updated_by",
+                "is_deleted",
             )
         }),
     )
@@ -104,6 +106,8 @@ class ProductAdmin(admin.ModelAdmin):
     ordering = ('category', 'name')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     inlines = [ProductColorInline]
+    
+
 
 # ------------------- Color -------------------
 @admin.register(Color)
@@ -116,7 +120,7 @@ class ColorAdmin(AuditableExcludeAdmin):
 
 # ------------------- ProductColor -------------------
 @admin.register(ProductColor)
-class ProductColorAdmin(admin.ModelAdmin):
+class ProductColorAdmin(AllObjectsAdmin):
     list_display = ('product', 'color','price','discount_percentage','discounted_price','order','stock','is_deleted')
     list_editable = ('stock','order','is_deleted')
     list_filter = ('product','color')
@@ -163,7 +167,7 @@ class ProductColorAdmin(admin.ModelAdmin):
     )
 # ------------------- ProductImage -------------------
 @admin.register(ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
+class ProductImageAdmin(AllObjectsAdmin):
     list_display = ('product_color', 'image', 'order', 'is_cover', 'created_at', 'updated_at','is_deleted')
     list_editable = ('order', 'is_cover','is_deleted')
     list_filter = ('product_color',)
@@ -173,7 +177,7 @@ class ProductImageAdmin(admin.ModelAdmin):
 
 # ------------------- ProductComment -------------------
 @admin.register(ProductComment)
-class ProductCommentAdmin(admin.ModelAdmin):
+class ProductCommentAdmin(AllObjectsAdmin):
     list_display = ('created_by', 'product', 'text', 'is_approved', 'created_at', 'updated_at','is_deleted')
     list_editable = ('is_approved','is_deleted')
     list_filter = ('product', 'created_by', 'is_approved')
