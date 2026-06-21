@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from core.constants.provinces import ProvinceChoices
 from order.models import Cart, CartItem, Delivery, DiscountCode
 from product.models import Color, Product, ProductColor
 
@@ -88,7 +89,8 @@ class ApplyDiscountSerializer(serializers.ModelSerializer):
     
 class DeliverySetSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required = True)
+    province = serializers.ChoiceField(choices=ProvinceChoices.choices,write_only=True)    
     class Meta:
         model = Delivery
-        fields = ['id']
+        fields = ['id','province']
 
