@@ -18,6 +18,8 @@ from product.models import ProductColor
 from order.serializers import AddToCartSerializer
 
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+
+from shop.models import ShopSettings
 # Create your views here.
 
 @extend_schema(
@@ -344,4 +346,18 @@ class CartViewSet(viewsets.ViewSet):
             Delivery, id=serializer.validated_data["id"], is_active=True
         )
         cart.save()
-        return Response({"result": "Delivery Set Successfully"})
+        shop_settings = ShopSettings.objects.order_by("created_at").first()
+        is_same_province = (
+            shop_settings and serializer.validated_data["province"] == shop_settings.province
+        )
+        delivery_cost = cart.delivery_type.get_cost(is_same_province)
+        return Response(
+            {
+                "message": "Delivery Set Successfully",
+                "pricing": {
+                    "cart_total": cart.discounted_price,
+                    "delivery_cost": delivery_cost,
+                    "final_price": cart.discounted_price + delivery_cost,
+                },
+            }
+        )
