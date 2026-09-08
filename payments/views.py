@@ -83,7 +83,10 @@ class PaymentViewSet(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+        order = Order.objects.filter(status = 'pending_pay')
+        if order.exists():
+            # Bank
+            order.first()
         serializer = DetailPaySerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
 
