@@ -9,13 +9,15 @@ from product.models import Product
 
 class Banner(AuditableModel, SoftDeleteModel):
     POSITION_CHOICES = (
-        ("wide_single", "بنر عریض میانی (حداکثر ۱ عدد)"),
+        ("wide_single", "بنر عریض میانی (حداکثر ۱ عدد) "),
+        ("new_collection", "کالکشن جدید (حداکثر ۱ عدد)(بدون تصویر)"),
         ("middle_half", "بنرهای وسط صفحه (حداکثر ۲ عدد)"),
         ("side_grid_four", "بنر ستون کناری (حداکثر ۴ عدد)"),
     )
 
     MAX_ACTIVE_LIMITS = {
         "wide_single": 1,
+        "new_collection": 1,
         "middle_half": 2,
         "side_grid_four": 4,
     }
@@ -23,14 +25,14 @@ class Banner(AuditableModel, SoftDeleteModel):
     text = models.CharField(
         max_length=150, blank=True, null=True, verbose_name="متن کوتاه"
     )
-    image = models.ImageField(upload_to="banners/%Y/%m/", verbose_name="تصویر بنر")
+    image = models.ImageField(upload_to="banners/%Y/%m/", verbose_name="تصویر بنر",help_text = "اگر جایگاهی بدون تصویر باشد،تصویر آپلود شده شما نمایش داده نخواهد شد.")
     url = models.URLField(
         max_length=500, blank=True, null=True, verbose_name="لینک مقصد"
     )
     position = models.CharField(
         max_length=50, choices=POSITION_CHOICES, verbose_name="جایگاه نمایش"
     )
-    order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش ",db_index=True)
+    order = models.PositiveIntegerField(default=0, verbose_name="ترتیب نمایش ",db_index=True,help_text = "اگر جایگاه نمایش شما 1 عددی باشد ترتیب نمایش اثری نخواهد داشت.")
     is_active = models.BooleanField(default=True, verbose_name="فعال/غیرفعال")
 
     def clean(self):
