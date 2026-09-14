@@ -3,6 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound
 from django.shortcuts import get_object_or_404
 from django.db.models import ExpressionWrapper, F, DecimalField
 from core.constants.provinces import ProvinceChoices
@@ -67,9 +68,17 @@ class DeliveryView(generics.ListAPIView):
 
 
 class CartViewSet(viewsets.ViewSet):
+    
     def get_object(self):
-        return Cart.objects.get_or_create(created_by=self.request.user)[0]
+        cart = Cart.objects.get_or_create(created_by=self.request.user)[0]
+        if cart.status == "pay_doing":
+            raise NotFound(
+                "Cart is currently in payment process. "
+                "Please try again in 10 minutes."
+            )
+        return cart
 
+    
     @extend_schema(
         summary="Get user cart",
         description="""
@@ -83,8 +92,8 @@ class CartViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["GET"])
     def view(self, request):
-        context = {"status": "Success"}
         cart = self.get_object()
+        context = {"status": "Success"}
 
         for item in cart.items.select_related("product_color"):
             current_stock = item.product_color.stock
@@ -155,8 +164,8 @@ class CartViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["POST"], url_path="items/add")
     def add(self, request):
+        cart = self.get_object()
         data = self.request.data
-
         AddToCartSerializer(data=data).is_valid(
             raise_exception=True
         )  # For Validation ProductColor ID
@@ -171,7 +180,7 @@ class CartViewSet(viewsets.ViewSet):
 
         item, created = CartItem.objects.get_or_create(
             created_by=self.request.user,
-            cart=self.get_object(),
+            cart=cart,
             product_color=product_color,
         )
 
@@ -278,9 +287,9 @@ class CartViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["PATCH"], url_path="discount/apply")
     def apply(self, request):
+        obj = self.get_object()
         serializer = ApplyDiscountSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        obj = self.get_object()
 
         discount_code = get_object_or_404(
             DiscountCode, code=serializer.validated_data["code"]
@@ -339,9 +348,9 @@ class CartViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["PATCH"], url_path="delivery/set")
     def delivery_set(self, request):
+        cart = self.get_object()
         serializer = DeliverySetSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        cart = self.get_object()
         cart.delivery_type = get_object_or_404(
             Delivery, id=serializer.validated_data["id"], is_active=True
         )

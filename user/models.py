@@ -4,7 +4,6 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from django.utils.translation import gettext_lazy as _
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteModel
 
@@ -12,54 +11,54 @@ from core.models.soft_delete import SoftDeleteModel
 from product.models import Product
 
 class User(AbstractUser,AuditableModel, SoftDeleteModel):
-    phone_number = models.CharField(max_length=11, unique=True, verbose_name=_("Phone Number"))
-    verify_phone_number = models.BooleanField(default=False, verbose_name=_("Phone Verified"))
-    birthdate = models.DateField(null=True,blank=True,verbose_name=_("Birthdate"))
-    profile_image = models.ImageField(blank=True, null=True, upload_to="user/image_profiles/", verbose_name=_("Profile Image"))
-    province = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Province"))
-    city = models.CharField(max_length=30, blank=True, null=True, verbose_name=_("City"))
-    address = models.TextField(blank=True, null=True, verbose_name=_("Address"))
-    zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name=_("ZIP Code"))
-    receiver_phone_number = models.CharField(max_length=11,verbose_name=_("Receiver Phone Number"))
-    interests = models.ManyToManyField(Product,blank = True,related_name = 'interested_users',verbose_name=_("Interests"))
+    phone_number = models.CharField(max_length=11, unique=True, verbose_name=("شماره تلفن"))
+    verify_phone_number = models.BooleanField(default=False, verbose_name=("تایید شماره تلفن"))
+    birthdate = models.DateField(null=True,blank=True,verbose_name=("تاریخ تولد"))
+    profile_image = models.ImageField(blank=True, null=True, upload_to="user/image_profiles/", verbose_name=("عکس پروفایل"))
+    province = models.CharField(max_length=20, blank=True, null=True, verbose_name=("استان"))
+    city = models.CharField(max_length=30, blank=True, null=True, verbose_name=("شهر"))
+    address = models.TextField(blank=True, null=True, verbose_name=("آدرس"))
+    zip_code = models.CharField(max_length=10, blank=True, null=True, verbose_name=("کدپستی"))
+    receiver_phone_number = models.CharField(max_length=11,verbose_name=("شماره تلفن دریافت"))
+    interests = models.ManyToManyField(Product,blank = True,related_name = 'interested_users',verbose_name=("علاقه مندی ها"))
 
     def __str__(self):
         return f"کاربر {self.username} --- {self.first_name} {self.last_name}"
 
     class Meta:
-        verbose_name = _("User")
-        verbose_name_plural = _("Users")
+        verbose_name = ("کاربر")
+        verbose_name_plural = ("کاربران")
 
 
 class RegistrationSession(AuditableModel, SoftDeleteModel):
-    first_name = models.CharField(_("first name"), max_length=150, blank=True)
-    last_name = models.CharField(_("last name"), max_length=150, blank=True)
-    phone_number = models.CharField(max_length=11,unique = True,verbose_name=_("Phone Number"))
-    password_hash = models.CharField(verbose_name = _("password"), max_length=128)
-    birthdate = models.DateField(null=True,blank=True,verbose_name=_("Birthdate"))
-    email = models.EmailField(verbose_name = _("email address"), blank=True)
+    first_name = models.CharField(max_length=150, blank=True,verbose_name = ("نام"))
+    last_name = models.CharField(max_length=150, blank=True,verbose_name = ("نام خانوادگی"))
+    phone_number = models.CharField(max_length=11,unique = True,verbose_name=("شماره تلفن"))
+    password_hash = models.CharField(verbose_name = ("رمز عبور"), max_length=128)
+    birthdate = models.DateField(null=True,blank=True,verbose_name=("تاریخ تولد"))
+    email = models.EmailField(verbose_name = ("ایمیل"), blank=True)
 
     def __str__(self):
         return f"تایید ثبت نام {self.phone_number}"
 
     class Meta:
-        verbose_name = _("Sign Up Verification")
-        verbose_name_plural = _("Sign Up Verification Queue")
+        verbose_name = ("تایید ثبت نام")
+        verbose_name_plural = ("صف تایید ثبت نام")
 
 class OTPCodeModel(AuditableModel, SoftDeleteModel):
     PURPOSE_CHOICE = (("register","ثبت نام"),("reset_password","بازیابی رمز عبور"))
 
-    phone_number = models.CharField(max_length=11, verbose_name=_("Phone Number"))
+    phone_number = models.CharField(max_length=11, verbose_name=("شماره تلفن"))
 
-    purpose = models.CharField(max_length=20,choices=PURPOSE_CHOICE,default = 'register')
+    purpose = models.CharField(max_length=20,choices=PURPOSE_CHOICE,default = 'register',verbose_name = ("دلیل درخواست کد"))
 
-    code_hash = models.CharField(max_length=128)
+    code_hash = models.CharField(max_length=128,verbose_name = ("کد ارسال شده"))
 
-    attempts = models.PositiveSmallIntegerField(default=0)
+    attempts = models.PositiveSmallIntegerField(default=0,verbose_name = ("تعداد دفعات درخواست ارسال کد"))
 
-    last_sent_at = models.DateTimeField(null=True, blank=True)
+    last_sent_at = models.DateTimeField(null=True, blank=True,verbose_name = ("تایم آخرین کد ارسال شده"))
 
-    is_used = models.BooleanField(default=False)
+    is_used = models.BooleanField(default=False,verbose_name = ("استفاده شده"))
 
 
     def otp_validation(self):
@@ -79,35 +78,35 @@ class OTPCodeModel(AuditableModel, SoftDeleteModel):
         constraints = [
             models.UniqueConstraint(fields = ['phone_number','purpose'],name = 'unique_phone_purpose')
         ]
-        verbose_name = _("OTP Code")
-        verbose_name_plural = _("OTP Codes")
+        verbose_name = ("کد ارسال شده")
+        verbose_name_plural = ("کد های ارسال شده")
         ordering = ("-last_sent_at",)
 
 
 class ContactUs(AuditableModel, SoftDeleteModel):
-    first_name = models.CharField(max_length=50, verbose_name=_("First Name"))
-    last_name = models.CharField(max_length=50, verbose_name=_("Last Name"))
-    phone_number = models.CharField(max_length=11,unique = True,verbose_name=_("Phone Number"))
-    email = models.EmailField(blank=True, null=True,unique = True,verbose_name=_("Email"))
-    description = models.TextField(verbose_name=_("Description"))
-    is_called = models.BooleanField(default=False, verbose_name=_("Called"))
+    first_name = models.CharField(max_length=50, verbose_name=("نام"))
+    last_name = models.CharField(max_length=50, verbose_name=("نام خانوادگی"))
+    phone_number = models.CharField(max_length=11,unique = True,verbose_name=("شماره تلفن"))
+    email = models.EmailField(blank=True, null=True,unique = True,verbose_name=("ایمیل"))
+    description = models.TextField(verbose_name=("توضیحات"))
+    is_called = models.BooleanField(default=False, verbose_name=("تماس گرفته شده"))
 
     def __str__(self):
         return f"درخواست تماس با ما {self.first_name} -- {self.last_name} -- {self.phone_number}"
 
     class Meta:
-        verbose_name = _("Contact Us Request")
-        verbose_name_plural = _("Contact Us Requests")
+        verbose_name = ("درخواست تماس با ما")
+        verbose_name_plural = ("درخواست های تماس با ما")
 
 
 class Notification(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (("discount_code","کدتخفیف"),)
     subject = models.CharField(choices = STATUS_CHOICE,max_length = 30,blank = True,null = True,verbose_name = "موضوع اعلان")
-    title = models.CharField(max_length=75, verbose_name=_("Title"))
-    text = models.TextField(verbose_name=_("Text"))
+    title = models.CharField(max_length=75, verbose_name=("عنوان"))
+    text = models.TextField(verbose_name=("متن"))
     discount_code = models.ForeignKey("order.DiscountCode",on_delete = models.SET_NULL,null = True,blank = True,verbose_name = "کد تخفیف",related_name = "+")
-    is_published = models.BooleanField(default=False, verbose_name=_("Published"))
-    published_at = models.DateTimeField(blank=True, null=True, verbose_name=_("Published At"))
+    is_published = models.BooleanField(default=False, verbose_name=("منتشر شده"))
+    published_at = models.DateTimeField(blank=True, null=True, verbose_name=("تاریخ انتشار"))
 
     def save(self, *args, **kwargs):
         if self.is_published and self.published_at is None:
@@ -118,15 +117,15 @@ class Notification(AuditableModel, SoftDeleteModel):
         return self.title
 
     class Meta:
-        verbose_name = _("Notification")
-        verbose_name_plural = _("Notifications")
+        verbose_name = ("اعلان")
+        verbose_name_plural = ("اعلان ها")
         ordering = ("-created_at",)
 
 
 class NotificationRead(AuditableModel, SoftDeleteModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notification_reads", verbose_name=_("User"))
-    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name="user_statuses", verbose_name=_("Notification"))
-    read_at = models.DateTimeField(blank=True, null=True, verbose_name=_("Read At"))
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notification_reads", verbose_name=("کاربر"))
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name="user_statuses", verbose_name=("اعلان"))
+    read_at = models.DateTimeField(blank=True, null=True, verbose_name=("تایم خواندن اعلان"))
 
 
     def save(self, *args, **kwargs):
@@ -142,6 +141,6 @@ class NotificationRead(AuditableModel, SoftDeleteModel):
         return f"{self.user} - {self.notification}"
 
     class Meta:
-        verbose_name = _("User Notification Status")
-        verbose_name_plural = _("User Notification Statuses")
+        verbose_name = ("وضعیت دیدن اعلان توسط کاربر")
+        verbose_name_plural = ("وضعیت خوانده شدن اعلان ها توسط کاربران")
         unique_together = ("user", "notification")
