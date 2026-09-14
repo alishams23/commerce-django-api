@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from order.models import Order
 from payments.serializers import DetailPaySerializer
 from payments.tasks import create_order
+from shop.models import ShopSettings
 
 
 class PaymentViewSet(viewsets.ViewSet):
@@ -41,7 +42,17 @@ class PaymentViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["POST"], url_path="go-to-gateways")
     def go_to_gateway_view(self, request):
-                    
+        shop_setting = ShopSettings.objects.order_by("created_at").first()
+
+        if shop_setting.is_sale_active is False:
+            return Response(
+                {
+                    "status": "error",
+                    "message": shop_setting.maintenance_message,
+                },
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
         user = self.request.user
 
         # -------------------------
