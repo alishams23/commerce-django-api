@@ -2,6 +2,7 @@ from django.urls import path
 from .views import AddCommentProductView, BrandListView, CategoryListView, ColorListView, ProductDetailViewSet, ProductsListView
 from rest_framework.routers import DefaultRouter
 
+app_name = "product"
 
 urlpatterns = [
     # ------------------- Home/Index -------------------
@@ -15,5 +16,5 @@ urlpatterns = [
 ]
 
 router = DefaultRouter()
-router.register('detail', ProductDetailViewSet, basename="product-detail")
+router.register('detail', ProductDetailViewSet, basename="product-viewset")
 urlpatterns += router.urls
