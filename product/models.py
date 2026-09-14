@@ -1,9 +1,11 @@
 from django.db import models
+from django.urls import reverse
 from django.utils.text import slugify
 from core.models.auditable import AuditableModel
 from core.models.soft_delete import SoftDeleteManager, SoftDeleteModel
 from colorfield.fields import ColorField
 from django_ckeditor_5 import fields as ckeditor_fields
+from django.contrib.sites.models import Site
 
 # Create your models here.
 
@@ -132,6 +134,9 @@ class Product(AuditableModel, SoftDeleteModel):
 
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        site = Site.objects.get_current()
+        return f"https://{site.domain}/products/{self.slug}"
 
     class Meta:
         verbose_name = "محصول"
