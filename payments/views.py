@@ -1,26 +1,26 @@
-from django.http import Http404
-from django.shortcuts import render
-from django.db.models import F
-from rest_framework.response import Response
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from azbankgateways.models.enum import PaymentStatus
-# Create your views here.
-
-
-from azbankgateways.exceptions import AZBankGatewaysException
 from azbankgateways import (
     bankfactories,
-    models as bank_models,
+)
+from azbankgateways import (
     default_settings as settings,
 )
+from azbankgateways import (
+    models as bank_models,
+)
+from azbankgateways.exceptions import AZBankGatewaysException
+from azbankgateways.models.enum import PaymentStatus
+from django.db import transaction
+from django.db.models import F
+from django.http import Http404
+from django.shortcuts import render
 from django.urls import reverse
-
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from order.models import Order
 from payments.serializers import DetailPaySerializer
-
 from payments.tasks import create_order
 
 
@@ -41,86 +41,160 @@ class PaymentViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["POST"], url_path="go-to-gateways")
     def go_to_gateway_view(self, request):
-
+                    
         user = self.request.user
 
+        # -------------------------
+        # Get user's cart
+        # -------------------------
         try:
             user_cart = user.created_cart_set
+        except user.created_cart_set.RelatedObjectDoesNotExist:
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Cart is empty",
+                },
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
             
-        except:
-            return Response(
-                {
-                    "status": "error",
-                    "message": "Cart is empty",
-                },
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
-        
-        cart_discount_code = user_cart.discount_code
-        if cart_discount_code is not None and not cart_discount_code.code_validation():
-            cart_discount_code = None
-            user_cart.save()
+    
 
-        cart_items = user_cart.items.all().select_related("product_color")
-
-        if not cart_items:
-            return Response(
-                {
-                    "status": "error",
-                    "message": "Cart is empty",
-                },
-                status=status.HTTP_406_NOT_ACCEPTABLE,
+        # -------------------------
+        # Lock cart and validate it
+        # -------------------------
+        with transaction.atomic():
+            user_cart = (
+                user_cart.__class__.objects.select_for_update()
+                .prefetch_related("items__product_color")
+                .get(pk=user_cart.pk)
             )
 
-        out_of_stock = cart_items.filter(product_color__stock__lt=F("count"))
+            # Cart is already being paid
+            if user_cart.status == "pay_doing":
+                return Response(
+                    {
+                        "status": "error",
+                        "message": "Cart is currently in payment process.Please try again in 10 minutes.",
+                    },
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
 
-        if out_of_stock.exists():
-            first_bad = out_of_stock.select_related("product_color").first()
-            return Response(
-                {
-                    "status": "error",
-                    "message": f"Item {first_bad.product_color} out of stock",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+            # -------------------------
+            # Validate discount code
+            # -------------------------
+            cart_discount_code = user_cart.discount_code
+
+            if (
+                cart_discount_code is not None
+                and not cart_discount_code.code_validation()
+            ):
+                user_cart.discount_code = None
+                user_cart.save(update_fields=["discount_code"])
+
+            # -------------------------
+            # Get cart items
+            # -------------------------
+            cart_items = user_cart.items.select_related("product_color")
+
+            if not cart_items.exists():
+                return Response(
+                    {
+                        "status": "error",
+                        "message": "Cart is empty",
+                    },
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+
+            # -------------------------
+            # Check stock
+            # -------------------------
+            out_of_stock = cart_items.filter(product_color__stock__lt=F("count"))
+
+            if out_of_stock.exists():
+                first_bad = out_of_stock.first()
+
+                return Response(
+                    {
+                        "status": "error",
+                        "message": f"Item {first_bad.product_color} out of stock",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            # -------------------------
+            # Validate payment data
+            # -------------------------
+            serializer = DetailPaySerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            amount = user_cart.final_price
+
+            user_mobile_number = getattr(
+                user,
+                "phone_number",
+                " ",
             )
-        order = Order.objects.filter(status = 'pending_pay')
-        if order.exists():
-            # Bank
-            order.first()
-        serializer = DetailPaySerializer(data=self.request.data)
-        serializer.is_valid(raise_exception=True)
 
-        amount = user_cart.final_price
+            # -------------------------
+            # Mark cart as payment in progress
+            # -------------------------
+            user_cart.status = "pay_doing"
+            user_cart.save(update_fields=["status"])
 
-        user_mobile_number = getattr(user, "phone_number", " ")
+        # -------------------------------------------------
+        # IMPORTANT:
+        # Transaction is committed here.
+        # Do NOT keep DB transaction open during bank call.
+        # -------------------------------------------------
 
         factory = bankfactories.BankFactory()
+
         try:
             bank = factory.auto_create()
+
             bank.set_request(request)
             bank.set_amount(amount)
 
             bank.set_client_callback_url(reverse("payments:callback-gateway"))
+
             bank.set_mobile_number(user_mobile_number)
 
             bank_record = bank.ready()
 
             create_order(
                 serializer.validated_data,
-                self.request.user.id,
+                user.id,
                 bank_record.tracking_code,
             )
 
             return Response(
-                {"gateway_url": bank.get_gateway()}, status=status.HTTP_200_OK
+                {
+                    "gateway_url": bank.get_gateway(),
+                },
+                status=status.HTTP_200_OK,
             )
 
         except AZBankGatewaysException as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            # Bank request failed.
+            # Unlock cart so the user can try again.
+            user_cart.__class__.objects.filter(
+                pk=user_cart.pk,
+                status="pay_doing",
+            ).update(status="pending_pay")
+
+            return Response(
+                {
+                    "error": str(e),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 def callback_gateway_view(request):
     tracking_code = request.GET.get(settings.TRACKING_CODE_QUERY_PARAM, None)
+
+    if not tracking_code:
+        raise Http404
 
     try:
         order = Order.objects.select_related("created_by").get(
@@ -132,8 +206,6 @@ def callback_gateway_view(request):
     if order.status != "pending_pay":
         raise Http404
 
-    if not tracking_code:
-        raise Http404
     try:
         bank_record = bank_models.Bank.objects.get(tracking_code=tracking_code)
 
@@ -150,16 +222,22 @@ def callback_gateway_view(request):
     if bank_record.is_success and (int(bank_record.amount) >= user_cart.final_price):
         order.status = "paid"
         order.save()
+        user_cart.status = "pending_pay"
+        user_cart.save(update_fields=["status"])
         return render(request, "payment/success.html", context)
 
     elif bank_record.status == PaymentStatus.CANCEL_BY_USER:
         order.status = "cancelled"
         order.cancel_reason = "customer_request"
         order.save()
+        user_cart.status = "pending_pay"
+        user_cart.save(update_fields=["status"])
         return render(request, "payment/failed.html", context)
 
     else:
         order.status = "cancelled"
         order.cancel_reason = "payment_error"
         order.save()
+        user_cart.status = "pending_pay"
+        user_cart.save(update_fields=["status"])
         return render(request, "payment/failed.html", context)

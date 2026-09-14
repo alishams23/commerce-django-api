@@ -48,23 +48,26 @@ def create_order(validated_data, user_id, tracking_code):
                 product_count=cart_item.count,
             )
 
+            order_item.unit_discount_amount = (
+                product_color.price * product_color.discount_percentage
+            ) // 100
+            order_item.total_discount_amount = (
+                cart_item.total_price - cart_item.base_discounted
+            )
 
-            order_item.unit_discount_amount = (product_color.price * product_color.discount_percentage) // 100
-            order_item.total_discount_amount = (cart_item.total_price - cart_item.base_discounted)
-            
-            order_item.coupon_discount_amount = (cart_item.base_discounted - cart_item.discounted_price)
+            order_item.coupon_discount_amount = (
+                cart_item.base_discounted - cart_item.discounted_price
+            )
 
             product_color.stock -= cart_item.count
             product_color.save()
             order_item.total_price = cart_item.total_price
             order_item.final_price = cart_item.discounted_price
             order_item.save()
-            
+
         shop_settings = ShopSettings.objects.order_by("created_at").first()
 
-        is_same_province = (
-            shop_settings and order.province == shop_settings.province
-        )
+        is_same_province = shop_settings and order.province == shop_settings.province
 
         order.total_price = user_cart.total_price
         order.discount_price = user_cart.total_price - user_cart.discounted_price
@@ -74,11 +77,9 @@ def create_order(validated_data, user_id, tracking_code):
             else 0
         )
         order.delivery_type = (
-            user_cart.delivery_type.name
-            if user_cart.delivery_type
-            else None
+            user_cart.delivery_type.name if user_cart.delivery_type else None
         )
-    
+
         order.final_price = user_cart.discounted_price + order.delivery_price
         order.number = order.generate_number()
         order.save()
@@ -87,10 +88,12 @@ def create_order(validated_data, user_id, tracking_code):
 
 @shared_task
 def completing_order(cart_id, tracking_code):
-    order = Order.objects.get(transaction_code=tracking_code)
-    if order.status == "paid":
-        with transaction.atomic():
+    with transaction.atomic():
+        order = Order.objects.select_for_update().get(transaction_code=tracking_code)
+
+        if order.status == "paid":
             user_cart = Cart.objects.select_for_update().get(id=cart_id)
+
             discount_code = user_cart.discount_code
 
             if discount_code:
@@ -100,9 +103,16 @@ def completing_order(cart_id, tracking_code):
                 cart_item.delete_hard()
 
             order.status = "pending_review"
-            order.save()
+            order.save(update_fields=["status"])
+            
 
-    elif order.status == "pending_pay":
-        order.status = "cancelled"
-        order.cancel_reason = "payment_timeout"
-        order.save()
+        elif order.status == "pending_pay":
+            user_cart = Cart.objects.select_for_update().get(id=cart_id)
+            
+            order.status = "cancelled"
+            order.cancel_reason = "payment_timeout"
+            order.save(update_fields=["status", "cancel_reason"])
+
+            user_cart.status = "pending_pay"
+            user_cart.save(update_fields=["status"])
+

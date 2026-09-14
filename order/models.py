@@ -49,6 +49,7 @@ class Delivery(AuditableModel, SoftDeleteModel):
 class Cart(AuditableModel, SoftDeleteModel):
     STATUS_CHOICE = (
         ("pending_pay", "در انتظار پرداخت"),
+        ("pay_doing", "در حال پرداخت"),
         ("pay", "پرداخت شده"),
         ("pay_error", "خطا در حین پرداخت"),
     )
