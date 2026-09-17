@@ -42,3 +42,7 @@ AZ_IRANIAN_BANK_GATEWAYS = {
     "IS_SAFE_GET_GATEWAY_PAYMENT": True,  
     "CUSTOM_APP": None,  
 }
+
+SMS_USERNAME  = os.getenv('SMS_USERNAME')
+SMS_API_KEY = os.getenv('SMS_API_KEY')
+SMS_LINE  = os.getenv('SMS_LINE')

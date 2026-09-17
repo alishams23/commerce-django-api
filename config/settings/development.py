@@ -47,3 +47,7 @@ AZ_IRANIAN_BANK_GATEWAYS = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+SMS_USERNAME  = os.getenv('SMS_USERNAME')
+SMS_API_KEY = os.getenv('SMS_API_KEY')
+SMS_LINE  = os.getenv('SMS_LINE')
