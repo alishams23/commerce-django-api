@@ -8,7 +8,7 @@ from user.models import User
 
 
 # @shared_task
-def create_order(validated_data, user_id, tracking_code):
+def create_order(validated_data, user_id):
     with transaction.atomic():
         user = User.objects.get(id=user_id)
         order = Order.objects.create(
@@ -23,7 +23,6 @@ def create_order(validated_data, user_id, tracking_code):
             address=validated_data["address"],
             zip_code=validated_data["zip_code"],
             description=validated_data.get("description"),
-            transaction_code=tracking_code,
         )
         user_cart = user.created_cart_set
         discount_code = user_cart.discount_code
@@ -83,13 +82,14 @@ def create_order(validated_data, user_id, tracking_code):
         order.final_price = user_cart.discounted_price + order.delivery_price
         order.number = order.generate_number()
         order.save()
-        completing_order.apply_async(args=[user_cart.id, tracking_code], countdown=600)
+        completing_order.apply_async(args=[user_cart.id, order.id], countdown=600)
+        return order
 
 
 @shared_task
-def completing_order(cart_id, tracking_code):
+def completing_order(cart_id, order_id):
     with transaction.atomic():
-        order = Order.objects.select_for_update().get(transaction_code=tracking_code)
+        order = Order.objects.select_for_update().get(id=order_id)
 
         if order.status == "paid":
             user_cart = Cart.objects.select_for_update().get(id=cart_id)

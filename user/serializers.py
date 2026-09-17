@@ -1,5 +1,6 @@
 import re
 from rest_framework import serializers
+from core.constants.provinces import ProvinceChoices
 from order.models import DiscountCode, Order
 from product.models import Product, ProductComment, ProductImage
 from user.models import ContactUs, Notification, User
@@ -134,6 +135,7 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
     )
     password = serializers.CharField(required = False,max_length=128,write_only = True)
     username = serializers.CharField(required = False,max_length=150,validators=[UnicodeUsernameValidator(),UniqueValidator(queryset=User.objects.all())])
+    province = serializers.ChoiceField(choices=ProvinceChoices.choices,required = False)    
     class Meta:
         model = User
         fields = ['profile_image','get_full_name','first_name','last_name','username','phone_number','email','province',
@@ -155,8 +157,8 @@ class PersonalInfoSerializer(serializers.ModelSerializer):
         if not re.search(r'[0-9]', value):
             raise serializers.ValidationError("Password must contain at least one digit.")
 
-        # if not re.search(r'[!@#$%^&*(),.?\":{}|<>]', value):
-        #     raise serializers.ValidationError("Password must contain at least one special character.")
+        if not re.search(r'[!@#$%^&*(),.?\":{}|<>]', value):
+            raise serializers.ValidationError("Password must contain at least one special character.")
 
         phone = self.initial_data.get("phone_number")
         if phone and phone in value:
