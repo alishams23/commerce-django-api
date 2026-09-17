@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from core.services.sms_client import SMSIRClient, SMSMessages
 from product.models import Product
 from product.serializers import ProductListInterestsSerializer
 from user.models import ContactUs, Notification, NotificationRead, User
@@ -202,7 +203,7 @@ class RegisterViewSet(viewsets.ViewSet):
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
-        print(message)  # Send Code
+        SMSIRClient().send_verification_code(phone_number,542198,[{"name": "VERIFICATIONCODE", "value": message}])
 
         return Response({"status": "success", "message": "OTP Send Success"})
 
@@ -293,6 +294,7 @@ class RegisterViewSet(viewsets.ViewSet):
                 "last_name": user.last_name,
             },
         }
+        SMSIRClient().send_sms(mobile = user.phone_number,message_text = SMSMessages.WELCOME)
         return Response(context, status=status.HTTP_200_OK)
 
 
@@ -328,7 +330,7 @@ class ResetPasswordViewSet(viewsets.ViewSet):
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
-        print(message)  # Send Code
+        SMSIRClient().send_verification_code(phone_number,542198,[{"name": "VERIFICATIONCODE", "value": message}])
 
         return Response({"status": "success", "message": "OTP Send Success"})
 
