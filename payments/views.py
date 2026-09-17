@@ -10,7 +10,7 @@ from azbankgateways import (
 from azbankgateways.exceptions import AZBankGatewaysException
 from azbankgateways.models.enum import PaymentStatus
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse
@@ -118,6 +118,26 @@ class PaymentViewSet(viewsets.ViewSet):
                 )
 
             # -------------------------
+            # Check unpublished products
+            # -------------------------
+            unavailable_items = cart_items.filter(
+                Q(product_color__product__is_published=False)
+                | Q(product_color__product__is_deleted=True)
+            )
+
+            if unavailable_items.exists():
+                first_bad = unavailable_items.first()
+
+                return Response(
+                    {
+                        "status": "error",
+                        "message": f"Item {first_bad.product_color} is no longer available",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+
+            # -------------------------
             # Check stock
             # -------------------------
             out_of_stock = cart_items.filter(product_color__stock__lt=F("count"))
@@ -137,8 +157,6 @@ class PaymentViewSet(viewsets.ViewSet):
             # -------------------------
             serializer = DetailPaySerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-
-            amount = user_cart.final_price
 
             user_mobile_number = getattr(
                 user,
@@ -163,8 +181,12 @@ class PaymentViewSet(viewsets.ViewSet):
         try:
             bank = factory.auto_create()
 
+            order = create_order(
+                serializer.validated_data,
+                user.id,
+            )
             bank.set_request(request)
-            bank.set_amount(amount)
+            bank.set_amount(order.final_price)
 
             bank.set_client_callback_url(reverse("payments:callback-gateway"))
 
@@ -172,12 +194,8 @@ class PaymentViewSet(viewsets.ViewSet):
 
             bank_record = bank.ready()
 
-            create_order(
-                serializer.validated_data,
-                user.id,
-                bank_record.tracking_code,
-            )
-
+            order.transaction_code=bank_record.tracking_code
+            order.save()
             return Response(
                 {
                     "gateway_url": bank.get_gateway(),
