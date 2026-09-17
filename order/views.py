@@ -69,8 +69,13 @@ class DeliveryView(generics.ListAPIView):
 
 class CartViewSet(viewsets.ViewSet):
     
+    def get_cart(self):
+        return Cart.objects.get_or_create(
+            created_by=self.request.user
+        )[0]
+    
     def get_object(self):
-        cart = Cart.objects.get_or_create(created_by=self.request.user)[0]
+        cart = self.get_cart()
         if cart.status == "pay_doing":
             raise NotFound(
                 "Cart is currently in payment process. "
@@ -92,10 +97,17 @@ class CartViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["GET"])
     def view(self, request):
-        cart = self.get_object()
+        cart = self.get_cart()
         context = {"status": "Success"}
 
         for item in cart.items.select_related("product_color"):
+            if item.product_color.product.is_published is False or item.product_color.product.is_deleted is True:
+                context.setdefault("warnings", []).append(
+                    {
+                        "message": f"The item '{item.product_color}' is no longer available.",
+                        "item_id": item.id,
+                    }
+                )
             current_stock = item.product_color.stock
 
             if current_stock == 0 or item.count > current_stock:
@@ -106,11 +118,6 @@ class CartViewSet(viewsets.ViewSet):
                         "current_stock": current_stock,
                     }
                 )
-
-            # elif item.count > current_stock:
-            #     context.setdefault("warnings", []).append(
-            #         {"reason": "QUANTITY_ADJUSTED", "item_id": item.id}
-            #     )  # .{item.product_color.product.name}
 
         if cart.discount_code is not None and not cart.discount_code.code_validation():
             cart.discount_code = None
