@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 
 from core.admins.auditable import AuditableExcludeAdmin
 from core.admins.mixins import AllObjectsAdmin
@@ -33,33 +35,77 @@ class ProductColorInline(admin.TabularInline):
 
 # ------------------- Category -------------------
 @admin.register(Category)
-class CategoryAdmin(AuditableExcludeAdmin):
+class CategoryAdmin(AllObjectsAdmin):
     list_display = ('name', 'order', 'created_at', 'updated_at','is_active','is_deleted')
     list_editable = ('order','is_active','is_deleted')
     search_fields = ('name',)
     ordering = ('order',)
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+
     inlines = [CategoryChildrenInline]
+    fieldsets = (
+        ("اطلاعات اصلی", {
+            "fields": (
+                "name", 
+                "order", 
+            )
+        }),
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "deleted_at",
+                "created_by",
+                "updated_by",
+                "is_deleted",
+            )
+        }),
+    )
 
 # ------------------- CategoryChildren -------------------
 @admin.register(CategoryChildren)
-class CategoryChildrenAdmin(AuditableExcludeAdmin):
+class CategoryChildrenAdmin(AllObjectsAdmin):
     list_display = ('name', 'category', 'order', 'created_at', 'updated_at','is_active','is_deleted')
     list_editable = ('order','is_active','is_deleted')
     list_filter = ('category',)
     search_fields = ('name', 'category__name')
     ordering = ('category', 'order')
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
+
+    fieldsets = (
+        ("اطلاعات اصلی", {
+            "fields": (
+                "name", 
+                "category", 
+                "order", 
+            )
+        }),
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "deleted_at",
+                "created_by",
+                "updated_by",
+                "is_deleted",
+            )
+        }),
+    )
 
 # ------------------- Brand -------------------
 @admin.register(Brand)
-class BrandAdmin(AuditableExcludeAdmin):
+class BrandAdmin(AuditableExcludeAdmin,AllObjectsAdmin):
     list_display = ('name', 'created_at', 'updated_at','is_deleted')
+    list_editable = ('is_deleted',)
     search_fields = ('name',)
     ordering = ('name',)
 
 # ------------------- Product -------------------
 @admin.register(Product)
 class ProductAdmin(AllObjectsAdmin):
-    list_display = ('name', 'product_code', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite')
+    list_display = ('cover_thumbnail','name', 'product_code', 'category', 'brand', 'fixed_price', 'is_published', 'is_favorite')
     fieldsets = (
         ("اطلاعات اصلی", {
             "fields": (
@@ -98,7 +144,7 @@ class ProductAdmin(AllObjectsAdmin):
             )
         }),
     )
-    list_display_links = ('name',)
+    list_display_links = ('name', 'cover_thumbnail')
     prepopulated_fields = {"slug":("name",)}
     list_editable = ('is_published', 'is_favorite')
     list_filter = ('category', 'brand', 'is_published', 'is_favorite')
@@ -106,13 +152,34 @@ class ProductAdmin(AllObjectsAdmin):
     ordering = ('category', 'name')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     inlines = [ProductColorInline]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related(
+            Prefetch(
+                "colors__images",
+                queryset=ProductImage.objects.order_by("order", "-created_at"),
+            )
+        )
     
+    def cover_thumbnail(self, obj):
+        for color in obj.colors.all():
+            for img in color.images.all():
+                if img.is_cover:
+                    return format_html(
+                        '<img src="{}" style="width:70px;height:70px;object-fit:cover;border-radius:4px;" />',
+                        img.image.url,
+                    )
+        return "—"
+
+    cover_thumbnail.short_description = "عکس"
 
 
 # ------------------- Color -------------------
 @admin.register(Color)
 class ColorAdmin(AuditableExcludeAdmin):
     list_display = ('name','code','created_at', 'updated_at','is_deleted')
+    list_editable = ('is_deleted',)
     search_fields = ('name','code')
     ordering = ('name',)
 
@@ -149,7 +216,6 @@ class ProductColorAdmin(AllObjectsAdmin):
             "fields": (
                 "stock",
                 "order",
-                "is_deleted",
             ),
             "classes": ("wide",)
         }),
@@ -162,6 +228,8 @@ class ProductColorAdmin(AllObjectsAdmin):
                 "deleted_at",
                 "created_by",
                 "updated_by",
+                "is_deleted",
+
             )
         }),
     )
@@ -175,6 +243,27 @@ class ProductImageAdmin(AllObjectsAdmin):
     ordering = ('product_color', 'order')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
+    fieldsets = (
+        ("اطلاعات اصلی", {
+            "fields": (
+                "product_color", 
+                "image", 
+                "order", 
+                "is_cover", 
+            )
+        }),
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "deleted_at",
+                "created_by",
+                "updated_by",
+                "is_deleted",
+            )
+        }),
+    )
 # ------------------- ProductComment -------------------
 @admin.register(ProductComment)
 class ProductCommentAdmin(AllObjectsAdmin):
@@ -183,7 +272,29 @@ class ProductCommentAdmin(AllObjectsAdmin):
     list_filter = ('product', 'created_by', 'is_approved')
     search_fields = ('user__username', 'product__name', 'text')
     ordering = ('-created_at',)
-    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'updated_by')
+    readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
     
+    fieldsets = (
+        ("اطلاعات اصلی", {
+            "fields": (
+                "product", 
+                "text", 
+                "reply",
+                "is_approved",
+            )
+        }),
+        ("اطلاعات سیستمی", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_at",
+                "updated_at",
+                "deleted_at",
+                "created_by",
+                "updated_by",
+                "is_deleted",
+            )
+        }),
+    )
+
     def get_queryset(self, request):
         return ProductComment.all_objects.all()
