@@ -66,8 +66,8 @@ class CategoryAdmin(AllObjectsAdmin):
 # ------------------- CategoryChildren -------------------
 @admin.register(CategoryChildren)
 class CategoryChildrenAdmin(AllObjectsAdmin):
-    list_display = ('name', 'category', 'order', 'created_at', 'updated_at','is_active','is_deleted')
-    list_editable = ('order','is_active','is_deleted')
+    list_display = ('name', 'category', 'order', 'created_at', 'updated_at','is_active','show_in_menu','is_deleted')
+    list_editable = ('order','is_active','show_in_menu','is_active','is_deleted')
     list_filter = ('category',)
     search_fields = ('name', 'category__name')
     ordering = ('category', 'order')
@@ -79,6 +79,8 @@ class CategoryChildrenAdmin(AllObjectsAdmin):
                 "name", 
                 "category", 
                 "order", 
+                "is_active",
+                "show_in_menu"
             )
         }),
         ("اطلاعات سیستمی", {
