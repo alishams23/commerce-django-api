@@ -48,6 +48,7 @@ class CategoryAdmin(AllObjectsAdmin):
             "fields": (
                 "name", 
                 "order", 
+                "is_active", 
             )
         }),
         ("اطلاعات سیستمی", {
