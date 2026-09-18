@@ -31,7 +31,7 @@ AZ_IRANIAN_BANK_GATEWAYS = {
     "GATEWAYS": {
         "ZARINPAL": {
             "MERCHANT_CODE": os.environ.get("ZARINPAL_MERCHANT_CODE", ""),
-            "SANDBOX": 1, 
+            "SANDBOX": 0, 
         },
     },
     "IS_SAMPLE_FORM_ENABLE": True,  
