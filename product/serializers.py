@@ -120,7 +120,7 @@ class ProductListInterestsSerializer(serializers.ModelSerializer):
         fields = ["id","product_code","name","slug","fixed_price","discount_percentage","stock",'image']
     
     def get_image(self,obj):
-        product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True,order = 0).first()
+        product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True).first()
         if product_image is None:
             return None
         return self.context.get("request").build_absolute_uri(product_image.image.url)
