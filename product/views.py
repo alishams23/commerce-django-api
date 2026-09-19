@@ -41,11 +41,11 @@ class CategoryListView(generics.ListAPIView):
     def get_queryset(self):
         children_qs = CategoryChildren.objects.filter(
             is_active=True, is_deleted=False
-        ).order_by("order", "created_at")
+        ).order_by("order", "-created_at")
         return (
             Category.objects.filter(is_active=True, is_deleted=False)
             .prefetch_related(Prefetch("children", queryset=children_qs))
-            .order_by("order", "created_at")
+            .order_by("order", "-created_at")
         )
 
 
