@@ -184,7 +184,7 @@ class ProductUserSerializer(serializers.ModelSerializer):
         fields = ['id','name','slug','image']
 
     def get_image(self,obj):
-        product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True,order = 0).first()
+        product_image = ProductImage.objects.filter(product_color__product = obj,is_cover = True).first()
         if not product_image:
             return None
         return self.context.get("request").build_absolute_uri(product_image.image.url)
