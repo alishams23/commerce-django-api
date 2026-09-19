@@ -26,8 +26,8 @@ class ProductColorImageInline(admin.TabularInline):
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
     extra = 1
-    fields = ('product', 'color', 'stock','base_price','base_discount')
-    ordering = ('-created_at',)
+    fields = ('product', 'color', 'stock','base_price','base_discount','order')
+    ordering = ('order','-created_at',)
     autocomplete_fields = ['color']
     verbose_name = "رنگ محصول"
     verbose_name_plural = "رنگ بندی محصولات"
@@ -193,7 +193,7 @@ class ColorAdmin(AuditableExcludeAdmin):
 class ProductColorAdmin(AllObjectsAdmin):
     list_display = ('product', 'color','price','discount_percentage','discounted_price','order','stock','is_deleted')
     list_editable = ('stock','order','is_deleted')
-    list_filter = ('product','color')
+    list_filter = ('product__name','color')
     search_fields = ('product__name','color__name')
     ordering = ('product','color')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
@@ -241,8 +241,8 @@ class ProductColorAdmin(AllObjectsAdmin):
 class ProductImageAdmin(AllObjectsAdmin):
     list_display = ('product_color', 'image', 'order', 'is_cover', 'created_at', 'updated_at','is_deleted')
     list_editable = ('order', 'is_cover','is_deleted')
-    list_filter = ('product_color',)
-    search_fields = ('product_color__name',)
+    list_filter = ('product_color__product','product_color__color')
+    search_fields = ('product_color__product__name',)
     ordering = ('product_color', 'order')
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by')
 
