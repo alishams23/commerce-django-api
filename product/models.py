@@ -19,6 +19,7 @@ class Category(AuditableModel, SoftDeleteModel):
         return f"دسته بندی والد - {self.name}"
 
     class Meta:
+        ordering = ('order','-created_at',)
         verbose_name = "دسته بندی والد"
         verbose_name_plural = "دسته بندی های والد"
 
@@ -45,6 +46,7 @@ class CategoryChildren(AuditableModel, SoftDeleteModel):
         return f"دسته بندی فرزند - {self.name}"
 
     class Meta:
+        ordering = ('order','-created_at',)
         verbose_name = "دسته بندی فرزند"
         verbose_name_plural = "دسته بندی های فرزند"
         indexes = [
@@ -59,6 +61,7 @@ class Brand(AuditableModel, SoftDeleteModel):
         return f"برند {self.id} - {self.name}"
 
     class Meta:
+        ordering = ('-created_at',)
         verbose_name = "برند"
         verbose_name_plural = "برندها "
 
@@ -142,6 +145,7 @@ class Product(AuditableModel, SoftDeleteModel):
         verbose_name = "محصول"
         verbose_name_plural = "محصولات "
         unique_together = ('name','category')
+        ordering = ('-created_at',)
         indexes = [
             models.Index(fields=["category", "is_published", "is_deleted"]),
             models.Index(fields=["fixed_price"]),
@@ -221,6 +225,7 @@ class ProductImage(AuditableModel, SoftDeleteModel):
         return f"عکس محصول {self.product_color}"
 
     class Meta:
+        ordering = ('order','-created_at',)
         verbose_name = "عکس محصول"
         verbose_name_plural = "عکس های محصولات"
 

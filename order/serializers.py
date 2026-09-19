@@ -56,7 +56,7 @@ class ProductColorCartSerializer(serializers.ModelSerializer):
         if not images:
             return None
         
-        cover = images.filter(is_cover = True,order = 0).first()
+        cover = images.filter(is_cover = True).first()
         return self.context.get("request").build_absolute_uri(cover.image.url if cover else images.first().image.url)
     
 class CartItemSerializer(serializers.ModelSerializer):
