@@ -243,6 +243,7 @@ def callback_gateway_view(request):
 
     context = {
         "tracking_code": tracking_code,
+        "retry_return_url": "https://faratabesh.co/basket",
         "frontend_return_url": "https://faratabesh.co/dashboard/orders",
     }
 

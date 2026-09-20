@@ -1,38 +1,67 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>پرداخت ناموفق</title>
-    <link rel="stylesheet" href="{% static 'css/payment_failed-ui.css' %}">
-
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body>
-    <div class="card">
-        <div class="icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+
+    <main class="w-full max-w-md bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 text-center">
+
+        <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </div>
-        <h1>پرداخت ناموفق بود</h1>
-        <p>متاسفانه تراکنش شما با خطا مواجه شد. در صورتی که مبلغی از حساب شما کسر شده است، طی ۷۲ ساعت آینده توسط بانک عودت داده خواهد شد.</p>
-        
-        <div class="tracking-box">
-            کد پیگیری تراکنش: <span dir="ltr">{{ tracking_code }}</span>
+
+        <h1 class="text-2xl font-bold text-slate-900 mb-3">پرداخت ناموفق بود</h1>
+
+        <p class="text-sm leading-7 text-slate-600 mb-6">
+            متاسفانه تراکنش شما با خطا مواجه شد. در صورتی که مبلغی از حساب شما کسر شده است، طی ۷۲ ساعت آینده توسط بانک عودت داده خواهد شد.
+        </p>
+
+        <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            کد پیگیری تراکنش:
+            <span dir="ltr" class="inline-block font-mono font-semibold text-slate-900">{{ tracking_code }}</span>
         </div>
 
-        <a href="{{ frontend_return_url }}" class="btn btn-retry">تلاش مجدد برای پرداخت</a>
-        <a href="{{ frontend_return_url }}" class="btn">بازگشت به سایت</a>
+        <div class="flex flex-col gap-3">
+            <a href="{{ frontend_return_url }}"
+               class="block w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2">
+                تلاش مجدد برای پرداخت
+            </a>
+            <a href="{{ frontend_return_url }}"
+               class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
+                بازگشت به سایت
+            </a>
+        </div>
 
-        <p class="timer-text">
-            در حال انتقال خودکار به سایت تا <span id="timer" style="color: #4b5563; font-weight: bold;">10</span> ثانیه دیگر...
+        <p class="mt-6 text-xs text-slate-500">
+            در حال انتقال خودکار به سایت تا
+            <span id="timer" class="font-bold text-slate-700">10</span>
+            ثانیه دیگر...
         </p>
-    </div>
+    </main>
+
     <script>
-        
-        window.returnUrl = "{{ frontend_return_url }}";
+        (function () {
+            var returnUrl = "{{ frontend_return_url|escapejs }}";
+            var seconds = 10;
+            var timerEl = document.getElementById("timer");
+
+            var interval = setInterval(function () {
+                seconds -= 1;
+                if (timerEl) timerEl.textContent = seconds;
+
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    if (returnUrl) window.location.href = returnUrl;
+                }
+            }, 1000);
+        })();
     </script>
-    <script src="{% static 'js/payment-ui.js' %}"></script>
 </body>
 </html>
