@@ -8,6 +8,8 @@
 ![Celery](https://img.shields.io/badge/Celery-async%20tasks-37814A?logo=celery&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-black?logo=jsonwebtokens&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-dev%20%26%20prod-2496ED?logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-reverse%20proxy-009639?logo=nginx&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 A full-featured e-commerce backend built with **Django REST Framework**, powering the storefront for **Faratabesh**. The backend was built to match a custom UI/UX design created specifically for this store — not as a generic, template-based e-commerce API.
